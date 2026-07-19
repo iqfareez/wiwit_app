@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 
+import 'shared/services/networking/chopper_instance.dart';
+import 'views/home/home.dart';
+
 void main() {
+  ChopperInstance.initializeChopperClient();
+
   runApp(const MainApp());
 }
 
