@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:gap/gap.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
+import '../../shared/constants.dart';
 import '../../shared/models/wiwit_api/auth/login_request.dart';
 import '../../shared/services/apis/auth_service.dart';
 import '../../shared/services/networking/chopper_instance.dart';
+import '../home/home.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -58,13 +61,17 @@ class _LoginPageState extends State<LoginPage> {
 
       // login success
       final loginResponse = response.body;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Signed in successfully. Token ${loginResponse?.tokenType} received',
-          ),
-        ),
+
+      // save the bearer token
+      final storage = FlutterSecureStorage();
+      await storage.write(
+        key: kStoreApiBearerToken,
+        value: loginResponse?.token,
       );
+      // go to home page
+      Navigator.of(
+        context,
+      ).pushReplacement(MaterialPageRoute(builder: (_) => Home()));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
