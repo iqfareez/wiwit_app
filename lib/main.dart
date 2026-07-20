@@ -3,7 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'shared/constants.dart';
 import 'shared/services/networking/chopper_instance.dart';
-import 'views/home/home.dart';
+import 'views/auth/login_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,7 +31,7 @@ class MainApp extends StatelessWidget {
         colorScheme: colorScheme,
         cardTheme: CardThemeData(color: Colors.white),
       ),
-      home: const Home(),
+      home: const LoginPage(),
     );
   }
 }

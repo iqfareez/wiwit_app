@@ -19,10 +19,10 @@ final class _$AuthService extends AuthService {
   final Type definitionType = AuthService;
 
   @override
-  Future<Response<dynamic>> login(Map<String, dynamic> body) {
+  Future<Response<LoginResponse>> login(LoginRequest body) {
     final Uri $url = Uri.parse('/api/v1/auth/login');
     final $body = body;
     final Request $request = Request('POST', $url, client.baseUrl, body: $body);
-    return client.send<dynamic, dynamic>($request);
+    return client.send<LoginResponse, LoginResponse>($request);
   }
 }
