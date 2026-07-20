@@ -1,8 +1,10 @@
 import 'package:chopper/chopper.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../apis/auth_service.dart';
 import '../apis/category_service.dart';
 import '../apis/transaction_service.dart';
+import 'auth_interceptor.dart';
 
 class ChopperInstance {
   static final ChopperInstance _singleton = ChopperInstance._internal();
@@ -24,6 +26,9 @@ class ChopperInstance {
         TransactionService.create(),
       ],
       converter: const JsonConverter(),
+      interceptors: [
+        AuthInterceptor(const FlutterSecureStorage()),
+      ],
     );
   }
 }

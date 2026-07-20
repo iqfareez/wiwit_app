@@ -19,8 +19,7 @@ final class _$CategoryService extends CategoryService {
   final Type definitionType = CategoryService;
 
   @override
-  Future<Response<dynamic>> getCategories(
-    String authorization, {
+  Future<Response<dynamic>> getCategories({
     int? page,
     int? perPage,
     bool? isActive,
@@ -31,77 +30,47 @@ final class _$CategoryService extends CategoryService {
       'per_page': perPage,
       'is_active': isActive,
     };
-    final Map<String, String> $headers = {'Authorization': authorization};
     final Request $request = Request(
       'GET',
       $url,
       client.baseUrl,
       parameters: $params,
-      headers: $headers,
     );
     return client.send<dynamic, dynamic>($request);
   }
 
   @override
-  Future<Response<dynamic>> createCategory(
-    String authorization,
-    Map<String, dynamic> body,
-  ) {
+  Future<Response<dynamic>> createCategory(Map<String, dynamic> body) {
     final Uri $url = Uri.parse('/api/v1/categories');
-    final Map<String, String> $headers = {'Authorization': authorization};
     final $body = body;
-    final Request $request = Request(
-      'POST',
-      $url,
-      client.baseUrl,
-      body: $body,
-      headers: $headers,
-    );
+    final Request $request = Request('POST', $url, client.baseUrl, body: $body);
     return client.send<dynamic, dynamic>($request);
   }
 
   @override
-  Future<Response<dynamic>> getCategory(String authorization, int id) {
+  Future<Response<dynamic>> getCategory(int id) {
     final Uri $url = Uri.parse('/api/v1/categories/${id}');
-    final Map<String, String> $headers = {'Authorization': authorization};
-    final Request $request = Request(
-      'GET',
-      $url,
-      client.baseUrl,
-      headers: $headers,
-    );
+    final Request $request = Request('GET', $url, client.baseUrl);
     return client.send<dynamic, dynamic>($request);
   }
 
   @override
-  Future<Response<dynamic>> updateCategory(
-    String authorization,
-    int id,
-    Map<String, dynamic> body,
-  ) {
+  Future<Response<dynamic>> updateCategory(int id, Map<String, dynamic> body) {
     final Uri $url = Uri.parse('/api/v1/categories/${id}');
-    final Map<String, String> $headers = {'Authorization': authorization};
     final $body = body;
     final Request $request = Request(
       'PATCH',
       $url,
       client.baseUrl,
       body: $body,
-      headers: $headers,
     );
     return client.send<dynamic, dynamic>($request);
   }
 
   @override
-  Future<Response<dynamic>> deleteCategory(String authorization, int id) {
+  Future<Response<dynamic>> deleteCategory(int id) {
     final Uri $url = Uri.parse('/api/v1/categories/${id}');
-    final Map<String, String> $headers = {'Authorization': authorization};
-    final Request $request = Request(
-      'DELETE',
-      $url,
-      client.baseUrl,
-      headers: $headers,
-    );
+    final Request $request = Request('DELETE', $url, client.baseUrl);
     return client.send<dynamic, dynamic>($request);
   }
 }

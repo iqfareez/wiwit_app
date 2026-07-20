@@ -12,6 +12,7 @@ dependencies:
 
   chopper: ^8.7.0
   device_info_plus: ^13.2.0
+  flutter_secure_storage: ^10.3.1
   gap: ^3.0.1
 
 dev_dependencies:

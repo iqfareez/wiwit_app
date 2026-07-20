@@ -1,6 +1,6 @@
 import 'package:chopper/chopper.dart';
 
-part 'transaction_service.chopper.dart';
+part 'transaction_service.chopper.g.dart';
 
 @ChopperApi(baseUrl: '/api/v1/transactions')
 abstract class TransactionService extends ChopperService {
@@ -8,8 +8,7 @@ abstract class TransactionService extends ChopperService {
       _$TransactionService(client);
 
   @GET()
-  Future<Response> getTransactions(
-    @Header('Authorization') String authorization, {
+  Future<Response> getTransactions({
     @Query() int? page,
     @Query('per_page') int? perPage,
     @Query() String? type,
@@ -19,27 +18,17 @@ abstract class TransactionService extends ChopperService {
   });
 
   @POST()
-  Future<Response> createTransaction(
-    @Header('Authorization') String authorization,
-    @Body() Map<String, dynamic> body,
-  );
+  Future<Response> createTransaction(@Body() Map<String, dynamic> body);
 
   @GET(path: '/{id}')
-  Future<Response> getTransaction(
-    @Header('Authorization') String authorization,
-    @Path() int id,
-  );
+  Future<Response> getTransaction(@Path() int id);
 
   @PATCH(path: '/{id}')
   Future<Response> updateTransaction(
-    @Header('Authorization') String authorization,
     @Path() int id,
     @Body() Map<String, dynamic> body,
   );
 
   @DELETE(path: '/{id}')
-  Future<Response> deleteTransaction(
-    @Header('Authorization') String authorization,
-    @Path() int id,
-  );
+  Future<Response> deleteTransaction(@Path() int id);
 }

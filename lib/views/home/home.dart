@@ -4,7 +4,7 @@ import 'package:gap/gap.dart';
 
 import '../../shared/services/apis/transaction_service.dart';
 import '../../shared/services/networking/chopper_instance.dart';
-import 'components/greeting_name.dart';
+import 'components/home_header.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -21,10 +21,7 @@ class _HomeState extends State<Home> {
     super.initState();
     _transactions = ChopperInstance.client!
         .getService<TransactionService>()
-        .getTransactions(
-          'Bearer 5|FxiNPkoMFMYJWCY6qtYuOt06bu602RKx53NwD3FO053b3ac9',
-          perPage: 20,
-        );
+        .getTransactions(perPage: 20);
   }
 
   @override
@@ -37,7 +34,7 @@ class _HomeState extends State<Home> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const GreetingName(name: 'Fareez'),
+                const HomeHeader(name: 'Fareez'),
                 const Gap(12),
                 const Text(
                   'Recent Transactions',

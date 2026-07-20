@@ -1,10 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import 'shared/constants.dart';
 import 'shared/services/networking/chopper_instance.dart';
 import 'views/home/home.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   ChopperInstance.initializeChopperClient();
+
+  // TODO: Temporary for testing, hardcoding the token to store to secure storage
+  final storage = FlutterSecureStorage();
+  await storage.write(
+    key: kStoreApiBearerToken,
+    value: '5|FxiNPkoMFMYJWCY6qtYuOt06bu602RKx53NwD3FO053b3ac9',
+  );
 
   runApp(const MainApp());
 }

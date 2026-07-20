@@ -19,8 +19,7 @@ final class _$TransactionService extends TransactionService {
   final Type definitionType = TransactionService;
 
   @override
-  Future<Response<dynamic>> getTransactions(
-    String authorization, {
+  Future<Response<dynamic>> getTransactions({
     int? page,
     int? perPage,
     String? type,
@@ -37,77 +36,50 @@ final class _$TransactionService extends TransactionService {
       'date_from': dateFrom,
       'date_to': dateTo,
     };
-    final Map<String, String> $headers = {'Authorization': authorization};
     final Request $request = Request(
       'GET',
       $url,
       client.baseUrl,
       parameters: $params,
-      headers: $headers,
     );
     return client.send<dynamic, dynamic>($request);
   }
 
   @override
-  Future<Response<dynamic>> createTransaction(
-    String authorization,
-    Map<String, dynamic> body,
-  ) {
+  Future<Response<dynamic>> createTransaction(Map<String, dynamic> body) {
     final Uri $url = Uri.parse('/api/v1/transactions');
-    final Map<String, String> $headers = {'Authorization': authorization};
     final $body = body;
-    final Request $request = Request(
-      'POST',
-      $url,
-      client.baseUrl,
-      body: $body,
-      headers: $headers,
-    );
+    final Request $request = Request('POST', $url, client.baseUrl, body: $body);
     return client.send<dynamic, dynamic>($request);
   }
 
   @override
-  Future<Response<dynamic>> getTransaction(String authorization, int id) {
+  Future<Response<dynamic>> getTransaction(int id) {
     final Uri $url = Uri.parse('/api/v1/transactions/${id}');
-    final Map<String, String> $headers = {'Authorization': authorization};
-    final Request $request = Request(
-      'GET',
-      $url,
-      client.baseUrl,
-      headers: $headers,
-    );
+    final Request $request = Request('GET', $url, client.baseUrl);
     return client.send<dynamic, dynamic>($request);
   }
 
   @override
   Future<Response<dynamic>> updateTransaction(
-    String authorization,
     int id,
     Map<String, dynamic> body,
   ) {
     final Uri $url = Uri.parse('/api/v1/transactions/${id}');
-    final Map<String, String> $headers = {'Authorization': authorization};
     final $body = body;
     final Request $request = Request(
       'PATCH',
       $url,
       client.baseUrl,
       body: $body,
-      headers: $headers,
     );
     return client.send<dynamic, dynamic>($request);
   }
 
   @override
-  Future<Response<dynamic>> deleteTransaction(String authorization, int id) {
+  Future<Response<dynamic>> deleteTransaction(int id) {
     final Uri $url = Uri.parse('/api/v1/transactions/${id}');
-    final Map<String, String> $headers = {'Authorization': authorization};
-    final Request $request = Request(
-      'DELETE',
-      $url,
-      client.baseUrl,
-      headers: $headers,
-    );
+    final Request $request = Request('DELETE', $url, client.baseUrl);
     return client.send<dynamic, dynamic>($request);
   }
 }
