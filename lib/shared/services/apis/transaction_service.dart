@@ -1,5 +1,7 @@
 import 'package:chopper/chopper.dart';
 
+import '../../models/wiwit_api/transactions/add_transaction_request.dart';
+
 part 'transaction_service.chopper.g.dart';
 
 @ChopperApi(baseUrl: '/api/v1/transactions')
@@ -18,7 +20,7 @@ abstract class TransactionService extends ChopperService {
   });
 
   @POST()
-  Future<Response> createTransaction(@Body() Map<String, dynamic> body);
+  Future<Response> createTransaction(@Body() AddTransactionRequest body);
 
   @GET(path: '/{id}')
   Future<Response> getTransaction(@Path() int id);

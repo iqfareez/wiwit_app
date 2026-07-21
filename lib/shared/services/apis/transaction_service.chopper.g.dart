@@ -46,7 +46,7 @@ final class _$TransactionService extends TransactionService {
   }
 
   @override
-  Future<Response<dynamic>> createTransaction(Map<String, dynamic> body) {
+  Future<Response<dynamic>> createTransaction(AddTransactionRequest body) {
     final Uri $url = Uri.parse('/api/v1/transactions');
     final $body = body;
     final Request $request = Request('POST', $url, client.baseUrl, body: $body);
