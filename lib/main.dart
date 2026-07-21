@@ -4,23 +4,23 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'shared/constants.dart';
 import 'shared/services/networking/chopper_instance.dart';
 import 'views/auth/login_page.dart';
+import 'views/home/home.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   ChopperInstance.initializeChopperClient();
 
-  // TODO: Temporary for testing, hardcoding the token to store to secure storage
-  final storage = FlutterSecureStorage();
-  await storage.write(
+  final token = await const FlutterSecureStorage().read(
     key: kStoreApiBearerToken,
-    value: '5|FxiNPkoMFMYJWCY6qtYuOt06bu602RKx53NwD3FO053b3ac9',
   );
 
-  runApp(const MainApp());
+  runApp(MainApp(isAuthenticated: token?.isNotEmpty ?? false));
 }
 
 class MainApp extends StatelessWidget {
-  const MainApp({super.key});
+  const MainApp({required this.isAuthenticated, super.key});
+
+  final bool isAuthenticated;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +31,7 @@ class MainApp extends StatelessWidget {
         colorScheme: colorScheme,
         cardTheme: CardThemeData(color: Colors.white),
       ),
-      home: const LoginPage(),
+      home: isAuthenticated ? const Home() : const LoginPage(),
     );
   }
 }
