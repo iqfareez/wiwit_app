@@ -1,0 +1,59 @@
+// GENERATED CODE - DO NOT MODIFY BY HAND
+
+part of 'transaction_response.dart';
+
+// **************************************************************************
+// JsonSerializableGenerator
+// **************************************************************************
+
+TransactionResponse _$TransactionResponseFromJson(Map<String, dynamic> json) =>
+    TransactionResponse(
+      id: (json['id'] as num).toInt(),
+      title: json['title'] as String,
+      type: $enumDecode(_$TransactionTypeEnumMap, json['type']),
+      amount: json['amount'] as String,
+      category: json['category'] == null
+          ? null
+          : TransactionCategoryResponse.fromJson(
+              json['category'] as Map<String, dynamic>,
+            ),
+      notes: json['notes'] as String?,
+      transactionDate: json['transaction_date'] as String,
+      createdAt: DateTime.parse(json['created_at'] as String),
+      updatedAt: DateTime.parse(json['updated_at'] as String),
+    );
+
+Map<String, dynamic> _$TransactionResponseToJson(
+  TransactionResponse instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'title': instance.title,
+  'type': _$TransactionTypeEnumMap[instance.type]!,
+  'amount': instance.amount,
+  'category': instance.category,
+  'notes': instance.notes,
+  'transaction_date': instance.transactionDate,
+  'created_at': instance.createdAt.toIso8601String(),
+  'updated_at': instance.updatedAt.toIso8601String(),
+};
+
+const _$TransactionTypeEnumMap = {
+  TransactionType.expense: 'expense',
+  TransactionType.income: 'income',
+};
+
+TransactionCategoryResponse _$TransactionCategoryResponseFromJson(
+  Map<String, dynamic> json,
+) => TransactionCategoryResponse(
+  id: (json['id'] as num).toInt(),
+  name: json['name'] as String,
+  isActive: json['is_active'] as bool,
+);
+
+Map<String, dynamic> _$TransactionCategoryResponseToJson(
+  TransactionCategoryResponse instance,
+) => <String, dynamic>{
+  'id': instance.id,
+  'name': instance.name,
+  'is_active': instance.isActive,
+};

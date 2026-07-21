@@ -1,0 +1,9 @@
+targets:
+  $default:
+    builders:
+      chopper_generator:
+        options:
+          # configure the generated file uses chopper.g.dart instead of
+          # the default .chopper.dart. Because i wanted my ide color them
+          # nicely so easy to differentiate
+          build_extensions: { ".dart": [".chopper.g.dart"] }
