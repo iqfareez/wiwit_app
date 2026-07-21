@@ -1,5 +1,9 @@
 import 'package:chopper/chopper.dart';
 
+import '../../models/wiwit_api/categories/add_category_request.dart';
+import '../../models/wiwit_api/categories/category_list_response.dart';
+import '../../models/wiwit_api/categories/category_response.dart';
+
 part 'category_service.chopper.g.dart';
 
 @ChopperApi(baseUrl: '/api/v1/categories')
@@ -8,17 +12,19 @@ abstract class CategoryService extends ChopperService {
       _$CategoryService(client);
 
   @GET()
-  Future<Response> getCategories({
+  Future<Response<CategoryListResponse>> getCategories({
     @Query() int? page,
     @Query('per_page') int? perPage,
-    @Query('is_active') bool? isActive,
+    @Query('show_inactive') bool? showInactive,
   });
 
   @POST()
-  Future<Response> createCategory(@Body() Map<String, dynamic> body);
+  Future<Response<CategoryResponse>> createCategory(
+    @Body() AddCategoryRequest body,
+  );
 
   @GET(path: '/{id}')
-  Future<Response> getCategory(@Path() int id);
+  Future<Response<CategoryResponse>> getCategory(@Path() int id);
 
   @PATCH(path: '/{id}')
   Future<Response> updateCategory(

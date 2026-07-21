@@ -1,6 +1,8 @@
 import 'package:chopper/chopper.dart';
 
 import '../../models/wiwit_api/transactions/add_transaction_request.dart';
+import '../../models/wiwit_api/transactions/transaction_list_response.dart';
+import '../../models/wiwit_api/transactions/transaction_response.dart';
 
 part 'transaction_service.chopper.g.dart';
 
@@ -10,7 +12,7 @@ abstract class TransactionService extends ChopperService {
       _$TransactionService(client);
 
   @GET()
-  Future<Response> getTransactions({
+  Future<Response<TransactionListResponse>> getTransactions({
     @Query() int? page,
     @Query('per_page') int? perPage,
     @Query() String? type,
@@ -20,10 +22,12 @@ abstract class TransactionService extends ChopperService {
   });
 
   @POST()
-  Future<Response> createTransaction(@Body() AddTransactionRequest body);
+  Future<Response<TransactionResponse>> createTransaction(
+    @Body() AddTransactionRequest body,
+  );
 
   @GET(path: '/{id}')
-  Future<Response> getTransaction(@Path() int id);
+  Future<Response<TransactionResponse>> getTransaction(@Path() int id);
 
   @PATCH(path: '/{id}')
   Future<Response> updateTransaction(

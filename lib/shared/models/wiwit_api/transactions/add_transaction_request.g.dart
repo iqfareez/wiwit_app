@@ -12,7 +12,7 @@ AddTransactionRequest _$AddTransactionRequestFromJson(
   title: json['title'] as String,
   amount: (json['amount'] as num).toDouble(),
   type: $enumDecode(_$TransactionTypeEnumMap, json['type']),
-  categoryId: (json['category_id'] as num).toInt(),
+  categoryId: (json['category_id'] as num?)?.toInt(),
   notes: json['notes'] as String?,
   transactionDate: DateTime.parse(json['transaction_date'] as String),
 );

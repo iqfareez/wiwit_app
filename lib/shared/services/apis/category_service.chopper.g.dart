@@ -19,16 +19,16 @@ final class _$CategoryService extends CategoryService {
   final Type definitionType = CategoryService;
 
   @override
-  Future<Response<dynamic>> getCategories({
+  Future<Response<CategoryListResponse>> getCategories({
     int? page,
     int? perPage,
-    bool? isActive,
+    bool? showInactive,
   }) {
     final Uri $url = Uri.parse('/api/v1/categories');
     final Map<String, dynamic> $params = <String, dynamic>{
       'page': page,
       'per_page': perPage,
-      'is_active': isActive,
+      'show_inactive': showInactive,
     };
     final Request $request = Request(
       'GET',
@@ -36,22 +36,22 @@ final class _$CategoryService extends CategoryService {
       client.baseUrl,
       parameters: $params,
     );
-    return client.send<dynamic, dynamic>($request);
+    return client.send<CategoryListResponse, CategoryListResponse>($request);
   }
 
   @override
-  Future<Response<dynamic>> createCategory(Map<String, dynamic> body) {
+  Future<Response<CategoryResponse>> createCategory(AddCategoryRequest body) {
     final Uri $url = Uri.parse('/api/v1/categories');
     final $body = body;
     final Request $request = Request('POST', $url, client.baseUrl, body: $body);
-    return client.send<dynamic, dynamic>($request);
+    return client.send<CategoryResponse, CategoryResponse>($request);
   }
 
   @override
-  Future<Response<dynamic>> getCategory(int id) {
+  Future<Response<CategoryResponse>> getCategory(int id) {
     final Uri $url = Uri.parse('/api/v1/categories/${id}');
     final Request $request = Request('GET', $url, client.baseUrl);
-    return client.send<dynamic, dynamic>($request);
+    return client.send<CategoryResponse, CategoryResponse>($request);
   }
 
   @override

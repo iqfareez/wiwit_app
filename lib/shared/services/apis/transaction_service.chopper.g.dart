@@ -19,7 +19,7 @@ final class _$TransactionService extends TransactionService {
   final Type definitionType = TransactionService;
 
   @override
-  Future<Response<dynamic>> getTransactions({
+  Future<Response<TransactionListResponse>> getTransactions({
     int? page,
     int? perPage,
     String? type,
@@ -42,22 +42,26 @@ final class _$TransactionService extends TransactionService {
       client.baseUrl,
       parameters: $params,
     );
-    return client.send<dynamic, dynamic>($request);
+    return client.send<TransactionListResponse, TransactionListResponse>(
+      $request,
+    );
   }
 
   @override
-  Future<Response<dynamic>> createTransaction(AddTransactionRequest body) {
+  Future<Response<TransactionResponse>> createTransaction(
+    AddTransactionRequest body,
+  ) {
     final Uri $url = Uri.parse('/api/v1/transactions');
     final $body = body;
     final Request $request = Request('POST', $url, client.baseUrl, body: $body);
-    return client.send<dynamic, dynamic>($request);
+    return client.send<TransactionResponse, TransactionResponse>($request);
   }
 
   @override
-  Future<Response<dynamic>> getTransaction(int id) {
+  Future<Response<TransactionResponse>> getTransaction(int id) {
     final Uri $url = Uri.parse('/api/v1/transactions/${id}');
     final Request $request = Request('GET', $url, client.baseUrl);
-    return client.send<dynamic, dynamic>($request);
+    return client.send<TransactionResponse, TransactionResponse>($request);
   }
 
   @override

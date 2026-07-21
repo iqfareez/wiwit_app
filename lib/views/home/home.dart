@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 
 import '../../shared/services/apis/transaction_service.dart';
+import '../../shared/models/wiwit_api/enums.dart';
+import '../../shared/models/wiwit_api/transactions/transaction_list_response.dart';
 import '../../shared/services/networking/chopper_instance.dart';
+import 'components/add_transaction_sheet.dart';
 import 'components/home_header.dart';
 
 class Home extends StatefulWidget {
@@ -14,14 +17,28 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  late final Future<Response> _transactions;
+  late Future<Response<TransactionListResponse>> _transactions;
 
   @override
   void initState() {
     super.initState();
+    _loadTransactions();
+  }
+
+  void _loadTransactions() {
     _transactions = ChopperInstance.client!
         .getService<TransactionService>()
         .getTransactions(perPage: 20);
+  }
+
+  void _showAddTransactionSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: false,
+      builder: (_) =>
+          AddTransactionSheet(onSaved: () => setState(_loadTransactions)),
+    );
   }
 
   @override
@@ -41,7 +58,7 @@ class _HomeState extends State<Home> {
                   style: TextStyle(fontWeight: FontWeight.w600),
                 ),
                 const Gap(12),
-                FutureBuilder<Response>(
+                FutureBuilder<Response<TransactionListResponse>>(
                   future: _transactions,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState != ConnectionState.done) {
@@ -55,8 +72,7 @@ class _HomeState extends State<Home> {
                       );
                     }
 
-                    final body = snapshot.data!.body as Map<String, dynamic>;
-                    final transactions = body['data'] as List<dynamic>? ?? [];
+                    final transactions = snapshot.data!.body?.data ?? [];
                     if (transactions.isEmpty) {
                       return const Text('No transactions yet.');
                     }
@@ -66,12 +82,9 @@ class _HomeState extends State<Home> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemBuilder: (context, index) {
-                        final transaction =
-                            transactions[index] as Map<String, dynamic>;
-                        final category =
-                            transaction['category'] as Map<String, dynamic>?;
-                        final isIncome = transaction['type'] == 'income';
-                        final amount = transaction['amount'];
+                        final transaction = transactions[index];
+                        final isIncome =
+                            transaction.type == TransactionType.income;
 
                         return Card(
                           shape: RoundedRectangleBorder(
@@ -79,14 +92,14 @@ class _HomeState extends State<Home> {
                           ),
                           child: ListTile(
                             title: Text(
-                              transaction['title'] as String? ?? 'Untitled',
+                              transaction.title,
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,
                               ),
                             ),
                             subtitle: Text(
-                              category?['name'] as String? ?? 'Uncategorized',
+                              transaction.category?.name ?? 'Uncategorized',
                               style: TextStyle(fontSize: 12),
                             ),
                             trailing: Column(
@@ -94,7 +107,7 @@ class _HomeState extends State<Home> {
                               crossAxisAlignment: CrossAxisAlignment.end,
                               children: [
                                 Text(
-                                  '${isIncome ? '+' : '-'}RM$amount',
+                                  '${isIncome ? '+' : '-'}RM${transaction.amount}',
                                   style: TextStyle(
                                     color: isIncome ? Colors.green : Colors.red,
                                     fontSize: 14,
@@ -102,8 +115,7 @@ class _HomeState extends State<Home> {
                                   ),
                                 ),
                                 Text(
-                                  transaction['transaction_date'] as String? ??
-                                      '',
+                                  transaction.transactionDate,
                                   style: TextStyle(
                                     fontSize: 12,
                                     fontWeight: .normal,
@@ -123,7 +135,7 @@ class _HomeState extends State<Home> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: _showAddTransactionSheet,
         tooltip: 'Add Transaction',
         child: const Icon(Icons.add),
       ),

@@ -1,0 +1,34 @@
+import 'package:json_annotation/json_annotation.dart';
+
+part 'category_response.g.dart';
+
+@JsonSerializable()
+/// Represents the category response
+class CategoryResponse {
+  final int id;
+  final String name;
+  @JsonKey(name: 'is_active')
+  final bool isActive;
+  @JsonKey(name: 'created_at')
+  final DateTime createdAt;
+  @JsonKey(name: 'updated_at')
+  final DateTime updatedAt;
+
+  CategoryResponse({
+    required this.id,
+    required this.name,
+    required this.isActive,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  factory CategoryResponse.fromJson(Map<String, dynamic> json) =>
+      _$CategoryResponseFromJson(json);
+
+  Map<String, dynamic> toJson() => _$CategoryResponseToJson(this);
+
+  @override
+  String toString() {
+    return 'CategoryResponse(id: $id, name: $name, isActive: $isActive)';
+  }
+}

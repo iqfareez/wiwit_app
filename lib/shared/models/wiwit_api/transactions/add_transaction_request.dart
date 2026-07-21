@@ -11,7 +11,7 @@ class AddTransactionRequest {
   final double amount;
   final TransactionType type;
   @JsonKey(name: 'category_id')
-  final int categoryId;
+  final int? categoryId;
   final String? notes;
   @JsonKey(name: 'transaction_date', toJson: _dateOnly)
   final DateTime transactionDate;
@@ -20,8 +20,8 @@ class AddTransactionRequest {
     required this.title,
     required this.amount,
     required this.type,
-    required this.categoryId,
-    required this.notes,
+    this.categoryId,
+    this.notes,
     required this.transactionDate,
   });
 
