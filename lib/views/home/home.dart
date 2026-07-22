@@ -1,13 +1,16 @@
-import 'package:chopper/chopper.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 
+import '../../shared/models/wiwit_api/transactions/transaction_response.dart';
 import '../../shared/services/apis/transaction_service.dart';
-import '../../shared/models/wiwit_api/enums.dart';
-import '../../shared/models/wiwit_api/transactions/transaction_list_response.dart';
 import '../../shared/services/networking/chopper_instance.dart';
 import 'components/add_transaction_sheet.dart';
 import 'components/home_header.dart';
+import 'components/transaction_tile.dart';
+
+/// The states the recent transactions list can be in.
+enum _ListStatus { loading, ready, error }
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -16,19 +19,150 @@ class Home extends StatefulWidget {
   State<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> {
-  late Future<Response<TransactionListResponse>> _transactions;
+class _HomeState extends State<Home> with WidgetsBindingObserver {
+  static const _transactionsPerPage = 20;
+  static const _itemAnimationDuration = Duration(milliseconds: 350);
+  static const _itemSlideOffset = Offset(0, -0.25);
+  static const _spinnerRadius = 7.0;
+  static const _spinnerFadeDuration = Duration(milliseconds: 200);
+
+  final _listKey = GlobalKey<AnimatedListState>();
+  final _transactions = <TransactionResponse>[];
+  var _status = _ListStatus.loading;
+  var _isRefreshing = false;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadTransactions();
   }
 
-  void _loadTransactions() {
-    _transactions = ChopperInstance.client!
-        .getService<TransactionService>()
-        .getTransactions(perPage: 20);
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state != AppLifecycleState.resumed) return;
+
+    _refreshTransactions();
+  }
+
+  /// Fetches the latest transactions
+  Future<({List<TransactionResponse>? data, String? error})>
+  _fetchTransactions() async {
+    try {
+      final response = await ChopperInstance.client!
+          .getService<TransactionService>()
+          .getTransactions(perPage: _transactionsPerPage);
+
+      if (!response.isSuccessful) {
+        return (
+          data: null,
+          error: 'Could not load transactions (${response.statusCode}).',
+        );
+      }
+
+      return (
+        data: response.body?.data ?? <TransactionResponse>[],
+        error: null,
+      );
+    } catch (error) {
+      return (data: null, error: '$error');
+    }
+  }
+
+  Future<void> _loadTransactions() async {
+    _isRefreshing = true;
+    final result = await _fetchTransactions();
+
+    if (!mounted) return;
+
+    setState(() {
+      _isRefreshing = false;
+
+      if (result.data == null) {
+        _status = _ListStatus.error;
+        _errorMessage = result.error;
+        return;
+      }
+
+      _replaceTransactions(result.data!);
+    });
+  }
+
+  /// Refetches and animates only what actually changed
+  Future<void> _refreshTransactions() async {
+    if (_isRefreshing) return;
+
+    setState(() => _isRefreshing = true);
+    final result = await _fetchTransactions();
+
+    if (!mounted) return;
+
+    setState(() {
+      _isRefreshing = false;
+
+      if (result.data == null) {
+        _status = _ListStatus.error;
+        _errorMessage = result.error;
+        return;
+      }
+
+      // The AnimatedList is off screen here, so there is no state to animate
+      // through. Swap the data instead and the list reads it when it builds.
+      if (_status != _ListStatus.ready || _listKey.currentState == null) {
+        _replaceTransactions(result.data!);
+        return;
+      }
+
+      _applyIncoming(result.data!);
+    });
+  }
+
+  void _replaceTransactions(List<TransactionResponse> incoming) {
+    _transactions
+      ..clear()
+      ..addAll(incoming);
+    _status = _ListStatus.ready;
+  }
+
+  void _applyIncoming(List<TransactionResponse> incoming) {
+    final incomingIds = incoming.map((transaction) => transaction.id).toSet();
+
+    // Drop entries that disappeared server side, back to front so the
+    // remaining indexes stay valid while we mutate.
+    for (var index = _transactions.length - 1; index >= 0; index--) {
+      if (incomingIds.contains(_transactions[index].id)) continue;
+
+      final removed = _transactions.removeAt(index);
+      _listKey.currentState!.removeItem(
+        index,
+        (context, animation) => _buildAnimatedTile(removed, animation),
+        duration: _itemAnimationDuration,
+      );
+    }
+
+    // Animate in every entry we did not have yet, keeping the server order.
+    final existingIds = _transactions
+        .map((transaction) => transaction.id)
+        .toSet();
+    for (var index = 0; index < incoming.length; index++) {
+      final transaction = incoming[index];
+      if (existingIds.contains(transaction.id)) continue;
+
+      final position = index.clamp(0, _transactions.length);
+      _transactions.insert(position, transaction);
+      _listKey.currentState!.insertItem(
+        position,
+        duration: _itemAnimationDuration,
+      );
+    }
   }
 
   void _showAddTransactionSheet() {
@@ -36,8 +170,57 @@ class _HomeState extends State<Home> {
       context: context,
       isScrollControlled: true,
       showDragHandle: false,
-      builder: (_) =>
-          AddTransactionSheet(onSaved: () => setState(_loadTransactions)),
+      builder: (_) => AddTransactionSheet(onSaved: _refreshTransactions),
+    );
+  }
+
+  Widget _buildAnimatedTile(
+    TransactionResponse transaction,
+    Animation<double> animation,
+  ) {
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+    );
+
+    return SizeTransition(
+      sizeFactor: curved,
+      child: FadeTransition(
+        opacity: curved,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: _itemSlideOffset,
+            end: Offset.zero,
+          ).animate(curved),
+          child: TransactionTile(transaction: transaction),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTransactions() {
+    // TODO: Replace the empty body with a shimmer placeholder list
+    if (_status == _ListStatus.loading) {
+      return const SizedBox.shrink();
+    }
+
+    if (_status == _ListStatus.error) {
+      return Text(_errorMessage ?? 'Could not load transactions.');
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (_transactions.isEmpty) const Text('No transactions yet.'),
+        AnimatedList(
+          key: _listKey,
+          initialItemCount: _transactions.length,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemBuilder: (context, index, animation) =>
+              _buildAnimatedTile(_transactions[index], animation),
+        ),
+      ],
     );
   }
 
@@ -53,82 +236,24 @@ class _HomeState extends State<Home> {
               children: [
                 const HomeHeader(name: 'Fareez'),
                 const Gap(12),
-                const Text(
-                  'Recent Transactions',
-                  style: TextStyle(fontWeight: FontWeight.w600),
+                Row(
+                  children: [
+                    const Text(
+                      'Recent Transactions',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const Gap(8),
+                    AnimatedOpacity(
+                      opacity: _isRefreshing ? 1 : 0,
+                      duration: _spinnerFadeDuration,
+                      child: const CupertinoActivityIndicator(
+                        radius: _spinnerRadius,
+                      ),
+                    ),
+                  ],
                 ),
                 const Gap(12),
-                FutureBuilder<Response<TransactionListResponse>>(
-                  future: _transactions,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState != ConnectionState.done) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (snapshot.hasError || !snapshot.data!.isSuccessful) {
-                      return Text(
-                        snapshot.hasError
-                            ? '${snapshot.error}'
-                            : 'Could not load transactions (${snapshot.data!.statusCode}).',
-                      );
-                    }
-
-                    final transactions = snapshot.data!.body?.data ?? [];
-                    if (transactions.isEmpty) {
-                      return const Text('No transactions yet.');
-                    }
-
-                    return ListView.builder(
-                      itemCount: transactions.length,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemBuilder: (context, index) {
-                        final transaction = transactions[index];
-                        final isIncome =
-                            transaction.type == TransactionType.income;
-
-                        return Card(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: ListTile(
-                            title: Text(
-                              transaction.title,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14,
-                              ),
-                            ),
-                            subtitle: Text(
-                              transaction.category?.name ?? 'Uncategorized',
-                              style: TextStyle(fontSize: 12),
-                            ),
-                            trailing: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(
-                                  '${isIncome ? '+' : '-'}RM${transaction.amount}',
-                                  style: TextStyle(
-                                    color: isIncome ? Colors.green : Colors.red,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                                Text(
-                                  transaction.transactionDate,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: .normal,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
+                _buildTransactions(),
               ],
             ),
           ),
