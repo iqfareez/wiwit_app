@@ -1,1 +1,2 @@
-const kStoreApiBearerToken = 'storeWiwitApiBearerToken';
+const kStoreApiBearerToken = 'secureStoreWiwitApiBearerToken';
+const kStoreServerUrl = 'storeWiwitServerUrl';

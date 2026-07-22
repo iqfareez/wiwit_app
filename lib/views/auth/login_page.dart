@@ -107,9 +107,12 @@ class _LoginPageState extends State<LoginPage> {
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Image.asset(
-                          'assets/logos/icon-light-84.png',
-                          height: 42,
+                        Hero(
+                          tag: 'appLogo',
+                          child: Image.asset(
+                            'assets/logos/icon-light-84.png',
+                            height: 42,
+                          ),
                         ),
                         Gap(18),
                         Text(

@@ -25,9 +25,11 @@ class ChopperInstance {
 
   static ChopperClient? client;
 
-  static void initializeChopperClient() {
-    client ??= ChopperClient(
-      baseUrl: Uri.parse('https://wiwit-staging.iqfareez.com'),
+  /// Builds (or rebuilds) the shared client pointed at [baseUrl].
+  static void initializeChopperClient(String baseUrl) {
+    client?.dispose();
+    client = ChopperClient(
+      baseUrl: Uri.parse(baseUrl),
       services: [
         AuthService.create(),
         CategoryService.create(),
@@ -42,5 +44,28 @@ class ChopperInstance {
       }),
       interceptors: [AuthInterceptor(const FlutterSecureStorage())],
     );
+  }
+
+  /// Tears down the client, e.g. when the user switches to another server.
+  static void reset() {
+    client?.dispose();
+    client = null;
+  }
+
+  /// Pings [baseUrl] to confirm the server is reachable.
+  ///
+  /// Any HTTP response (even 401/404) means the host answered, so it counts
+  /// as reachable. Only connection failures or timeouts return `false`.
+  static Future<bool> isServerReachable(String baseUrl) async {
+    // TODO: Create an endpoint to verify it's the wiwit instances
+    final probe = ChopperClient(baseUrl: Uri.parse(baseUrl));
+    try {
+      await probe.get(Uri.parse('/')).timeout(const Duration(seconds: 10));
+      return true;
+    } catch (_) {
+      return false;
+    } finally {
+      probe.dispose();
+    }
   }
 }

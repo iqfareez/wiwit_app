@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../profile/settings_page.dart';
+
 class HomeHeader extends StatelessWidget {
   const HomeHeader({super.key, required this.name});
 
@@ -26,10 +28,10 @@ class HomeHeader extends StatelessWidget {
             // crossAxisAlignment: .end,
             children: [
               IconButton(
-                onPressed: () {
-                  // TODO: Make open profile page
-                  print("pressed avatar");
-                },
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SettingsPage()),
+                ),
+                tooltip: 'Settings',
                 icon: CircleAvatar(
                   backgroundColor: Colors.black,
                   child: Text("F", style: TextStyle(color: Colors.white)),
