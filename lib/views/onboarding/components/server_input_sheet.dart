@@ -18,16 +18,13 @@ class ServerInputSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Lift the sheet above the keyboard when it opens.
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      padding: EdgeInsets.fromLTRB(24, 24, 24, 24 + bottomInset),
+      padding: EdgeInsets.all(24),
       child: Form(
         key: formKey,
         child: Column(

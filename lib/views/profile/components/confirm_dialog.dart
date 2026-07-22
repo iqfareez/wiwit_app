@@ -23,14 +23,14 @@ class _ConfirmDialogState extends State<ConfirmDialog> {
   var _isRunning = false;
 
   Future<void> _run() async {
+    final route = ModalRoute.of(context);
+
     setState(() => _isRunning = true);
 
     try {
       await widget.action();
     } finally {
-      // The action usually navigates away and takes this dialog with it, so
-      // only close it when it's somehow still on screen.
-      if (mounted) Navigator.pop(context);
+      if (mounted && (route?.isActive ?? false)) Navigator.pop(context);
     }
   }
 
