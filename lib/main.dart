@@ -26,6 +26,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = ColorScheme.fromSeed(seedColor: Color(0xFF7CCF00));
     return MaterialApp(
+      title: 'Wiwit',
       theme: ThemeData(
         fontFamily: 'DMSans',
         colorScheme: colorScheme,
