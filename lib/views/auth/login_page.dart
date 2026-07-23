@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
-import '../../shared/constants.dart';
 import '../../shared/models/wiwit_api/auth/login_request.dart';
-import '../../shared/services/apis/auth_service.dart';
-import '../../shared/services/networking/chopper_instance.dart';
-import '../home/home.dart';
+import '../../shared/providers/auth_provider.dart';
+import '../../shared/providers/chopper_provider.dart';
+import '../../shared/providers/server_url_provider.dart';
 
-class LoginPage extends StatefulWidget {
+class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends ConsumerState<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -29,6 +28,8 @@ class _LoginPageState extends State<LoginPage> {
     _passwordController.dispose();
     super.dispose();
   }
+
+  Future<void> _changeServer() => ref.read(serverUrlProvider.notifier).clear();
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
@@ -49,8 +50,7 @@ class _LoginPageState extends State<LoginPage> {
         deviceName: androidInfo.manufacturer + androidInfo.model,
       );
 
-      final authService = ChopperInstance.client!.getService<AuthService>();
-      final response = await authService.login(request);
+      final response = await ref.read(authServiceProvider).login(request);
 
       if (!mounted) return;
 
@@ -59,19 +59,14 @@ class _LoginPageState extends State<LoginPage> {
         throw Exception('Error when logging in');
       }
 
-      // login success
-      final loginResponse = response.body;
+      final token = response.body?.token;
+      if (token == null || token.isEmpty) {
+        throw Exception('The server did not return a token');
+      }
 
-      // save the bearer token
-      final storage = FlutterSecureStorage();
-      await storage.write(
-        key: kStoreApiBearerToken,
-        value: loginResponse?.token,
-      );
-      // go to home page
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => Home()));
+      // Storing the token is the whole navigation: the root view watches it
+      // and swaps onboarding/login out for home.
+      await ref.read(authTokenProvider.notifier).set(token);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -85,6 +80,9 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+
+    final serverUrl = ref.watch(serverUrlProvider).value;
+
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -297,6 +295,26 @@ class _LoginPageState extends State<LoginPage> {
                                       ),
                                     ),
                                   ],
+                                ),
+                              ),
+                              const Divider(height: 24),
+                              Center(
+                                child: TextButton.icon(
+                                  onPressed: _isLoading ? null : _changeServer,
+                                  icon: const Icon(
+                                    Icons.dns_outlined,
+                                    size: 16,
+                                  ),
+                                  label: Text(
+                                    serverUrl ?? 'Change server',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  style: TextButton.styleFrom(
+                                    foregroundColor:
+                                        theme.colorScheme.onSurfaceVariant,
+                                    textStyle: theme.textTheme.bodySmall,
+                                  ),
                                 ),
                               ),
                             ],

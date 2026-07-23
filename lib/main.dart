@@ -1,45 +1,43 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'shared/constants.dart';
-import 'shared/services/networking/chopper_instance.dart';
-import 'views/auth/login_page.dart';
-import 'views/home/home.dart';
-import 'views/onboarding/server_set_page.dart';
+import 'shared/providers/auth_provider.dart';
+import 'shared/providers/server_url_provider.dart';
+import 'shared/providers/theme_mode_provider.dart';
+import 'views/root_view.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final serverUrl = await SharedPreferencesAsync().getString(kStoreServerUrl);
-  final hasServer = serverUrl != null && serverUrl.isNotEmpty;
-
-  if (hasServer) {
-    ChopperInstance.initializeChopperClient(serverUrl);
-  }
-
-  final token = await const FlutterSecureStorage().read(
-    key: kStoreApiBearerToken,
-  );
+  // Warm the providers the first frame depends on.
+  final container = ProviderContainer();
+  await (
+    container.read(themeModeProvider.future),
+    container.read(serverUrlProvider.future),
+    container.read(authTokenProvider.future),
+  ).wait;
 
   runApp(
-    MainApp(hasServer: hasServer, isAuthenticated: token?.isNotEmpty ?? false),
+    UncontrolledProviderScope(container: container, child: const MainApp()),
   );
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({
-    required this.hasServer,
-    required this.isAuthenticated,
-    super.key,
-  });
+class MainApp extends ConsumerWidget {
+  const MainApp({super.key});
 
-  final bool hasServer;
-  final bool isAuthenticated;
+  static const _seedColor = Color(0xFF7CCF00);
 
   @override
-  Widget build(BuildContext context) {
-    final colorScheme = ColorScheme.fromSeed(seedColor: Color(0xFF7CCF00));
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Already resolved in main(), so the fallback only covers a failed read.
+    final themeMode = ref.watch(themeModeProvider).value ?? ThemeMode.system;
+
+    final colorScheme = ColorScheme.fromSeed(seedColor: _seedColor);
+    final darkColorScheme = ColorScheme.fromSeed(
+      seedColor: _seedColor,
+      brightness: .dark,
+    );
+
     return MaterialApp(
       title: 'Wiwit',
       theme: ThemeData(
@@ -47,19 +45,13 @@ class MainApp extends StatelessWidget {
         colorScheme: colorScheme,
         cardTheme: CardThemeData(color: Colors.white),
       ),
-      home: Builder(
-        builder: (context) {
-          // Onboarding when no server is set, otherwise home or login
-          // depending on whether a token exists.
-          if (!hasServer) {
-            return const ServerSetPage();
-          }
-          if (!isAuthenticated) {
-            return const LoginPage();
-          }
-          return const Home();
-        },
+      darkTheme: ThemeData(
+        brightness: .dark,
+        colorScheme: darkColorScheme,
+        cardTheme: CardThemeData(color: Colors.black),
       ),
+      themeMode: themeMode,
+      home: const RootView(),
     );
   }
 }

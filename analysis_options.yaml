@@ -1,5 +1,10 @@
 include: package:flutter_lints/flutter.yaml
 
+# Riverpod ships its lints as an analysis server plugin, so they are enabled
+# here rather than as a dev_dependency.
+plugins:
+  riverpod_lint: ^3.1.4
+
 linter:
   rules:
     - prefer_relative_imports

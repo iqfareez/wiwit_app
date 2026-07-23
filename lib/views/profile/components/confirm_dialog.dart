@@ -30,7 +30,7 @@ class _ConfirmDialogState extends State<ConfirmDialog> {
     try {
       await widget.action();
     } finally {
-      if (mounted && (route?.isActive ?? false)) Navigator.pop(context);
+      if (mounted && (route?.isActive ?? false)) Navigator.pop(context, true);
     }
   }
 

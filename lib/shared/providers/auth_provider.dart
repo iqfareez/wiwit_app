@@ -1,0 +1,34 @@
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+import '../constants.dart';
+import 'storage_provider.dart';
+
+part 'auth_provider.g.dart';
+
+/// The bearer token for the current session, or `null` when signed out.
+@Riverpod(keepAlive: true)
+class AuthToken extends _$AuthToken {
+  @override
+  Future<String?> build() =>
+      ref.watch(secureStorageProvider).read(key: kStoreApiBearerToken);
+
+  Future<void> set(String token) async {
+    await ref
+        .read(secureStorageProvider)
+        .write(key: kStoreApiBearerToken, value: token);
+
+    state = AsyncData(token);
+  }
+
+  Future<void> clear() async {
+    // TODO: call the logout endpoint once the API implements it, so the token
+    // is revoked server side and not just dropped locally.
+    await ref.read(secureStorageProvider).delete(key: kStoreApiBearerToken);
+
+    state = const AsyncData(null);
+  }
+}
+
+@Riverpod(keepAlive: true)
+bool isAuthenticated(Ref ref) =>
+    ref.watch(authTokenProvider).value?.isNotEmpty ?? false;

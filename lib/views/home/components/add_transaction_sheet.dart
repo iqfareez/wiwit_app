@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
 import '../../../shared/models/wiwit_api/categories/category_response.dart';
 import '../../../shared/models/wiwit_api/enums.dart';
 import '../../../shared/models/wiwit_api/transactions/add_transaction_request.dart';
-import '../../../shared/services/apis/category_service.dart';
-import '../../../shared/services/apis/transaction_service.dart';
-import '../../../shared/services/networking/chopper_instance.dart';
+import '../../../shared/providers/chopper_provider.dart';
 
 /// The UI for adding transaction record
-class AddTransactionSheet extends StatefulWidget {
+class AddTransactionSheet extends ConsumerStatefulWidget {
   const AddTransactionSheet({super.key, required this.onSaved});
 
   final VoidCallback onSaved;
 
   @override
-  State<AddTransactionSheet> createState() => _AddTransactionSheetState();
+  ConsumerState<AddTransactionSheet> createState() =>
+      _AddTransactionSheetState();
 }
 
-class _AddTransactionSheetState extends State<AddTransactionSheet> {
+class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
@@ -36,8 +36,8 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
   }
 
   Future<List<CategoryResponse>> _loadCategories() async {
-    final response = await ChopperInstance.client!
-        .getService<CategoryService>()
+    final response = await ref
+        .read(categoryServiceProvider)
         .getCategories(perPage: 100);
     if (!response.isSuccessful) {
       // TODO: Add toast says fetch categories failed
@@ -70,8 +70,8 @@ class _AddTransactionSheetState extends State<AddTransactionSheet> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSaving = true);
-    final response = await ChopperInstance.client!
-        .getService<TransactionService>()
+    final response = await ref
+        .read(transactionServiceProvider)
         .createTransaction(
           AddTransactionRequest(
             title: _titleController.text.trim(),

@@ -1,27 +1,27 @@
 import 'dart:async';
 
 import 'package:chopper/chopper.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import '../../constants.dart';
+const _authorizationHeader = 'Authorization';
 
+/// Stamps the current bearer token onto every outgoing request.
 class AuthInterceptor implements Interceptor {
-  final FlutterSecureStorage storage;
+  AuthInterceptor(this.readToken);
 
-  AuthInterceptor(this.storage);
+  final Future<String?> Function() readToken;
 
   @override
   FutureOr<Response<BodyType>> intercept<BodyType>(
     Chain<BodyType> chain,
   ) async {
-    final token = await storage.read(key: kStoreApiBearerToken);
+    final token = await readToken();
 
-    if (token == null) {
+    if (token == null || token.isEmpty) {
       return chain.proceed(chain.request);
     }
 
     return chain.proceed(
-      applyHeader(chain.request, 'Authorization', 'Bearer $token'),
+      applyHeader(chain.request, _authorizationHeader, 'Bearer $token'),
     );
   }
 }

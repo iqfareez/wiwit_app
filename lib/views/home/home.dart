@@ -1,11 +1,11 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
 import '../../shared/models/wiwit_api/transactions/transaction_response.dart';
-import '../../shared/services/apis/transaction_service.dart';
-import '../../shared/services/networking/chopper_instance.dart';
+import '../../shared/providers/chopper_provider.dart';
 import 'components/add_transaction_sheet.dart';
 import 'components/home_header.dart';
 import 'components/transaction_tile.dart';
@@ -13,14 +13,14 @@ import 'components/transaction_tile.dart';
 /// The states the recent transactions list can be in.
 enum _ListStatus { loading, ready, error }
 
-class Home extends StatefulWidget {
+class Home extends ConsumerStatefulWidget {
   const Home({super.key});
 
   @override
-  State<Home> createState() => _HomeState();
+  ConsumerState<Home> createState() => _HomeState();
 }
 
-class _HomeState extends State<Home> with WidgetsBindingObserver {
+class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
   static const _transactionsPerPage = 12;
   static const _itemAnimationDuration = Duration(milliseconds: 350);
   static const _itemSlideOffset = Offset(0, -0.25);
@@ -58,8 +58,8 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
   Future<({List<TransactionResponse>? data, String? error})>
   _fetchTransactions() async {
     try {
-      final response = await ChopperInstance.client!
-          .getService<TransactionService>()
+      final response = await ref
+          .read(transactionServiceProvider)
           .getTransactions(perPage: _transactionsPerPage);
 
       if (!response.isSuccessful) {

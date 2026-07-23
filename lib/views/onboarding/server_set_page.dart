@@ -1,21 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../shared/constants.dart';
-import '../../shared/services/networking/chopper_instance.dart';
-import '../auth/login_page.dart';
+import '../../shared/providers/server_url_provider.dart';
+import '../../shared/services/networking/server_probe.dart';
 import 'components/server_input_sheet.dart';
 
 /// Onboarding page to setup server instance URL.
-class ServerSetPage extends StatefulWidget {
+class ServerSetPage extends ConsumerStatefulWidget {
   const ServerSetPage({super.key});
 
   @override
-  State<ServerSetPage> createState() => _ServerSetPageState();
+  ConsumerState<ServerSetPage> createState() => _ServerSetPageState();
 }
 
-class _ServerSetPageState extends State<ServerSetPage> {
+class _ServerSetPageState extends ConsumerState<ServerSetPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _urlController = TextEditingController();
   bool _isLoading = false;
@@ -48,7 +47,7 @@ class _ServerSetPageState extends State<ServerSetPage> {
     try {
       final serverUrl = _normalizeUrl(_urlController.text);
 
-      final reachable = await ChopperInstance.isServerReachable(serverUrl);
+      final reachable = await isServerReachable(serverUrl);
       if (!mounted) return;
 
       if (!reachable) {
@@ -60,32 +59,7 @@ class _ServerSetPageState extends State<ServerSetPage> {
         return;
       }
 
-      // Persist and wire up the client against the chosen server.
-      await SharedPreferencesAsync().setString(kStoreServerUrl, serverUrl);
-      ChopperInstance.initializeChopperClient(serverUrl);
-
-      if (!mounted) return;
-
-      // Morph into the login screen with a fade + subtle scale.
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 550),
-          pageBuilder: (_, _, _) => const LoginPage(),
-          transitionsBuilder: (_, animation, _, child) {
-            final curved = CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeInOutCubic,
-            );
-            return FadeTransition(
-              opacity: curved,
-              child: ScaleTransition(
-                scale: Tween<double>(begin: 0.94, end: 1).animate(curved),
-                child: child,
-              ),
-            );
-          },
-        ),
-      );
+      await ref.read(serverUrlProvider.notifier).set(serverUrl);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
