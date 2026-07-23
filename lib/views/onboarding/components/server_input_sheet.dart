@@ -81,7 +81,7 @@ class ServerInputSheet extends StatelessWidget {
                         width: 22,
                         child: CircularProgressIndicator(
                           strokeWidth: 2.5,
-                          color: Theme.of(context).colorScheme.onPrimary,
+                          color: Theme.of(context).colorScheme.secondary,
                         ),
                       )
                     : Text(

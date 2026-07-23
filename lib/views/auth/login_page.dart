@@ -108,7 +108,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         Hero(
                           tag: 'appLogo',
                           child: Image.asset(
-                            'assets/logos/icon-light-84.png',
+                            'assets/logos/icon-${Theme.brightnessOf(context).name}-84.png',
                             height: 42,
                           ),
                         ),
@@ -259,7 +259,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                           width: 22,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2.5,
-                                            color: theme.colorScheme.onPrimary,
+                                            color: theme.colorScheme.secondary,
                                           ),
                                         )
                                       : Text(

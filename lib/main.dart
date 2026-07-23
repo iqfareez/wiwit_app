@@ -18,6 +18,7 @@ Future<void> main() async {
   ).wait;
 
   runApp(
+    // we use Uncontrolled because wanted to avoid app changing it theme briefly
     UncontrolledProviderScope(container: container, child: const MainApp()),
   );
 }
@@ -29,7 +30,6 @@ class MainApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Already resolved in main(), so the fallback only covers a failed read.
     final themeMode = ref.watch(themeModeProvider).value ?? ThemeMode.system;
 
     final colorScheme = ColorScheme.fromSeed(seedColor: _seedColor);
@@ -47,6 +47,7 @@ class MainApp extends ConsumerWidget {
       ),
       darkTheme: ThemeData(
         brightness: .dark,
+        fontFamily: 'DMSans',
         colorScheme: darkColorScheme,
         cardTheme: CardThemeData(color: Colors.black),
       ),
