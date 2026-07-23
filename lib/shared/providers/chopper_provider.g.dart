@@ -52,7 +52,7 @@ final class ChopperClientProvider
   }
 }
 
-String _$chopperClientHash() => r'cedd24a4b5d3348b69df295cd42b6ebfbb87226e';
+String _$chopperClientHash() => r'86df1a653132f09e0a725e618134c58f25e2e2f9';
 
 @ProviderFor(authService)
 final authServiceProvider = AuthServiceProvider._();
@@ -184,3 +184,44 @@ final class TransactionServiceProvider
 
 String _$transactionServiceHash() =>
     r'9fc521e183ce4fcdcab5e9d5924a1f9ca4c44e59';
+
+@ProviderFor(profileService)
+final profileServiceProvider = ProfileServiceProvider._();
+
+final class ProfileServiceProvider
+    extends $FunctionalProvider<ProfileService, ProfileService, ProfileService>
+    with $Provider<ProfileService> {
+  ProfileServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: _neverRetry,
+        name: r'profileServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$profileServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<ProfileService> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  ProfileService create(Ref ref) {
+    return profileService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ProfileService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ProfileService>(value),
+    );
+  }
+}
+
+String _$profileServiceHash() => r'8d24f3b9093f56c157ef5516b675e70b2c360174';

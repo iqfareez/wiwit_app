@@ -19,7 +19,20 @@ class HomeHeader extends StatelessWidget {
             crossAxisAlignment: .stretch,
             children: [
               Text(greeting, style: TextStyle(fontSize: 14)),
-              Text(name, style: TextStyle(fontSize: 24, fontWeight: .bold)),
+              AnimatedSwitcher(
+                duration: Durations.medium2,
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeOutCubic,
+                layoutBuilder: (currentChild, previousChildren) => Stack(
+                  alignment: Alignment.centerLeft,
+                  children: [...previousChildren, ?currentChild],
+                ),
+                child: Text(
+                  name,
+                  key: ValueKey(name),
+                  style: TextStyle(fontSize: 24, fontWeight: .bold),
+                ),
+              ),
             ],
           ),
         ),

@@ -10,22 +10,16 @@ part of 'theme_mode_provider.dart';
 // ignore_for_file: type=lint, type=warning
 /// Owns the theme the user picked and persists it so the choice survives
 /// restarts.
-///
-/// Kept alive because the theme outlives any single screen watching it.
 
 @ProviderFor(ThemeModeNotifier)
 final themeModeProvider = ThemeModeNotifierProvider._();
 
 /// Owns the theme the user picked and persists it so the choice survives
 /// restarts.
-///
-/// Kept alive because the theme outlives any single screen watching it.
 final class ThemeModeNotifierProvider
     extends $AsyncNotifierProvider<ThemeModeNotifier, ThemeMode> {
   /// Owns the theme the user picked and persists it so the choice survives
   /// restarts.
-  ///
-  /// Kept alive because the theme outlives any single screen watching it.
   ThemeModeNotifierProvider._()
     : super(
         from: null,
@@ -49,8 +43,6 @@ String _$themeModeNotifierHash() => r'7b6f6994cde05e9ad8370845e3e21ea82646e1a0';
 
 /// Owns the theme the user picked and persists it so the choice survives
 /// restarts.
-///
-/// Kept alive because the theme outlives any single screen watching it.
 
 abstract class _$ThemeModeNotifier extends $AsyncNotifier<ThemeMode> {
   FutureOr<ThemeMode> build();

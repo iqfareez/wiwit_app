@@ -8,6 +8,7 @@ import '../models/wiwit_api/transactions/transaction_list_response.dart';
 import '../models/wiwit_api/transactions/transaction_response.dart';
 import '../services/apis/auth_service.dart';
 import '../services/apis/category_service.dart';
+import '../services/apis/profile_service.dart';
 import '../services/apis/transaction_service.dart';
 import '../services/networking/auth_interceptor.dart';
 import '../services/networking/json_serializable_converter.dart';
@@ -34,6 +35,7 @@ ChopperClient chopperClient(Ref ref) {
       AuthService.create(),
       CategoryService.create(),
       TransactionService.create(),
+      ProfileService.create(),
     ],
     converter: JsonSerializableConverter({
       LoginResponse: LoginResponse.fromJson,
@@ -61,3 +63,7 @@ CategoryService categoryService(Ref ref) =>
 @Riverpod(keepAlive: true, retry: _neverRetry)
 TransactionService transactionService(Ref ref) =>
     ref.watch(chopperClientProvider).getService<TransactionService>();
+
+@Riverpod(keepAlive: true, retry: _neverRetry)
+ProfileService profileService(Ref ref) =>
+    ref.watch(chopperClientProvider).getService<ProfileService>();

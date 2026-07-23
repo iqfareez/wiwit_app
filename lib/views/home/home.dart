@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -29,18 +31,21 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
   static const _morningEndHour = 12;
   static const _afternoonEndHour = 17;
   static const _eveningEndHour = 21;
+  static const _profileNameKey = 'name';
 
   final _listKey = GlobalKey<AnimatedListState>();
   final _transactions = <TransactionResponse>[];
   var _status = _ListStatus.loading;
   var _isRefreshing = false;
   String? _errorMessage;
+  String _name = '';
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadTransactions();
+    _loadProfile();
   }
 
   @override
@@ -98,6 +103,23 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
 
       _replaceTransactions(result.data!);
     });
+  }
+
+  /// Fetches the profile name shown in the greeting.
+  Future<void> _loadProfile() async {
+    try {
+      final response = await ref.read(profileServiceProvider).getProfile();
+      if (!response.isSuccessful) return;
+
+      final body = jsonDecode(response.bodyString) as Map<String, dynamic>;
+      final name = body[_profileNameKey] as String?;
+
+      if (!mounted || name == null) return;
+
+      setState(() => _name = name);
+    } catch (_) {
+      // Keep the greeting without a name if the profile fetch fails.
+    }
   }
 
   /// Refetches and animates only what actually changed
@@ -261,7 +283,7 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                HomeHeader(greeting: _getGreeting(), name: 'Fareez'),
+                HomeHeader(greeting: _getGreeting(), name: _name),
                 const Gap(12),
                 Row(
                   children: [
