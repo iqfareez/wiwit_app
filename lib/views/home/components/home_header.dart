@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import '../../profile/settings_page.dart';
 
 class HomeHeader extends StatelessWidget {
-  const HomeHeader({super.key, required this.name});
+  const HomeHeader({super.key, required this.greeting, required this.name});
 
+  final String greeting;
   final String name;
 
   @override
@@ -17,7 +18,7 @@ class HomeHeader extends StatelessWidget {
             mainAxisAlignment: .start,
             crossAxisAlignment: .stretch,
             children: [
-              Text("Good Morning", style: TextStyle(fontSize: 14)),
+              Text(greeting, style: TextStyle(fontSize: 14)),
               Text(name, style: TextStyle(fontSize: 24, fontWeight: .bold)),
             ],
           ),
@@ -28,9 +29,9 @@ class HomeHeader extends StatelessWidget {
             // crossAxisAlignment: .end,
             children: [
               IconButton(
-                onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const SettingsPage()),
-                ),
+                onPressed: () => Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const SettingsPage())),
                 tooltip: 'Settings',
                 icon: CircleAvatar(
                   backgroundColor: Colors.black,

@@ -26,6 +26,9 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
   static const _itemSlideOffset = Offset(0, -0.25);
   static const _spinnerRadius = 7.0;
   static const _spinnerFadeDuration = Duration(milliseconds: 200);
+  static const _morningEndHour = 12;
+  static const _afternoonEndHour = 17;
+  static const _eveningEndHour = 21;
 
   final _listKey = GlobalKey<AnimatedListState>();
   final _transactions = <TransactionResponse>[];
@@ -187,6 +190,17 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
     );
   }
 
+  /// Picks a greeting based on the current hour.
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+
+    if (hour < _morningEndHour) return 'Good Morning';
+    if (hour < _afternoonEndHour) return 'Good Afternoon';
+    if (hour < _eveningEndHour) return 'Good Evening';
+
+    return 'Good Night';
+  }
+
   Widget _buildAnimatedTile(
     TransactionResponse transaction,
     Animation<double> animation,
@@ -247,7 +261,7 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const HomeHeader(name: 'Fareez'),
+                HomeHeader(greeting: _getGreeting(), name: 'Fareez'),
                 const Gap(12),
                 Row(
                   children: [
