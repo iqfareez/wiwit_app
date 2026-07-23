@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 
@@ -20,7 +21,7 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> with WidgetsBindingObserver {
-  static const _transactionsPerPage = 20;
+  static const _transactionsPerPage = 12;
   static const _itemAnimationDuration = Duration(milliseconds: 350);
   static const _itemSlideOffset = Offset(0, -0.25);
   static const _spinnerRadius = 7.0;
@@ -163,6 +164,18 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
         duration: _itemAnimationDuration,
       );
     }
+
+    // to make sure edited data (that perhaps happened on backend side) would
+    // be updated in the UI here
+    final incomingById = {
+      for (final transaction in incoming) transaction.id: transaction,
+    };
+    for (var index = 0; index < _transactions.length; index++) {
+      final updated = incomingById[_transactions[index].id];
+      if (updated == null) continue;
+
+      _transactions[index] = updated;
+    }
   }
 
   void _showAddTransactionSheet() {
@@ -250,6 +263,21 @@ class _HomeState extends State<Home> with WidgetsBindingObserver {
                         radius: _spinnerRadius,
                       ),
                     ),
+                    // Only show trigger refresh button on debug mode
+                    if (kDebugMode)
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: Colors.red.shade200,
+                          visualDensity: .compact,
+                        ),
+                        onPressed: () {
+                          _refreshTransactions();
+                        },
+                        child: Text(
+                          'Trigger refresh',
+                          style: TextStyle(fontSize: 11),
+                        ),
+                      ),
                   ],
                 ),
                 const Gap(12),
