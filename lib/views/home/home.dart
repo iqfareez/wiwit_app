@@ -1,11 +1,10 @@
-import 'dart:convert';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
+import '../../shared/models/wiwit_api/profile/profile_response.dart';
 import '../../shared/models/wiwit_api/transactions/transaction_response.dart';
 import '../../shared/providers/chopper_provider.dart';
 import 'components/add_transaction_sheet.dart';
@@ -31,14 +30,13 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
   static const _morningEndHour = 12;
   static const _afternoonEndHour = 17;
   static const _eveningEndHour = 21;
-  static const _profileNameKey = 'name';
 
   final _listKey = GlobalKey<AnimatedListState>();
   final _transactions = <TransactionResponse>[];
   var _status = _ListStatus.loading;
   var _isRefreshing = false;
   String? _errorMessage;
-  String _name = '';
+  ProfileResponse? _userProfile;
 
   @override
   void initState() {
@@ -107,19 +105,14 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
 
   /// Fetches the profile name shown in the greeting.
   Future<void> _loadProfile() async {
-    try {
-      final response = await ref.read(profileServiceProvider).getProfile();
-      if (!response.isSuccessful) return;
+    final response = await ref.read(profileServiceProvider).getProfile();
+    if (!response.isSuccessful) return;
 
-      final body = jsonDecode(response.bodyString) as Map<String, dynamic>;
-      final name = body[_profileNameKey] as String?;
+    final profileDetail = response.body;
 
-      if (!mounted || name == null) return;
+    if (!mounted || profileDetail == null) return;
 
-      setState(() => _name = name);
-    } catch (_) {
-      // Keep the greeting without a name if the profile fetch fails.
-    }
+    setState(() => _userProfile = profileDetail);
   }
 
   /// Refetches and animates only what actually changed
@@ -283,7 +276,10 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                HomeHeader(greeting: _getGreeting(), name: _name),
+                HomeHeader(
+                  greeting: _getGreeting(),
+                  profileDetail: _userProfile,
+                ),
                 const Gap(12),
                 Row(
                   children: [

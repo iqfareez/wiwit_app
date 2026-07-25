@@ -4,6 +4,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/wiwit_api/auth/login_response.dart';
 import '../models/wiwit_api/categories/category_list_response.dart';
 import '../models/wiwit_api/categories/category_response.dart';
+import '../models/wiwit_api/profile/profile_response.dart';
 import '../models/wiwit_api/transactions/transaction_list_response.dart';
 import '../models/wiwit_api/transactions/transaction_response.dart';
 import '../services/apis/auth_service.dart';
@@ -43,6 +44,7 @@ ChopperClient chopperClient(Ref ref) {
       CategoryResponse: CategoryResponse.fromJson,
       TransactionListResponse: TransactionListResponse.fromJson,
       TransactionResponse: TransactionResponse.fromJson,
+      ProfileResponse: ProfileResponse.fromJson,
     }),
     interceptors: [AuthInterceptor(() => ref.read(authTokenProvider.future))],
   );

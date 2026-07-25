@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/models/wiwit_api/profile/profile_response.dart';
 import '../../profile/settings_page.dart';
 
 class HomeHeader extends StatelessWidget {
-  const HomeHeader({super.key, required this.greeting, required this.name});
+  const HomeHeader({
+    super.key,
+    required this.greeting,
+    required this.profileDetail,
+  });
 
   final String greeting;
-  final String name;
+  final ProfileResponse? profileDetail;
 
   @override
   Widget build(BuildContext context) {
@@ -28,8 +33,8 @@ class HomeHeader extends StatelessWidget {
                   children: [...previousChildren, ?currentChild],
                 ),
                 child: Text(
-                  name,
-                  key: ValueKey(name),
+                  profileDetail?.name ?? '',
+                  key: ValueKey(profileDetail),
                   style: TextStyle(fontSize: 24, fontWeight: .bold),
                 ),
               ),
@@ -39,17 +44,13 @@ class HomeHeader extends StatelessWidget {
         Flexible(
           child: Row(
             mainAxisAlignment: .end,
-            // crossAxisAlignment: .end,
             children: [
               IconButton(
                 onPressed: () => Navigator.of(
                   context,
                 ).push(MaterialPageRoute(builder: (_) => const SettingsPage())),
                 tooltip: 'Settings',
-                icon: CircleAvatar(
-                  backgroundColor: Colors.black,
-                  child: Text("F", style: TextStyle(color: Colors.white)),
-                ),
+                icon: _buildAvatar(context, profileDetail),
               ),
             ],
           ),
@@ -57,4 +58,46 @@ class HomeHeader extends StatelessWidget {
       ],
     );
   }
+}
+
+/// Get initial from name. Max two letters only.
+String _getInitials(String? name) {
+  if (name == null || name.trim().isEmpty) {
+    return '';
+  }
+
+  final parts = name.trim().split(RegExp(r'\s+'));
+  final initials = <String>[];
+
+  for (final part in parts.take(2)) {
+    if (part.isNotEmpty) {
+      initials.add(part[0].toUpperCase());
+    }
+  }
+
+  return initials.join();
+}
+
+/// Build avatar widget based on user's data
+Widget _buildAvatar(BuildContext context, ProfileResponse? profileDetail) {
+  if (profileDetail == null) {
+    return CircleAvatar(
+      backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
+      child: const Icon(Icons.person_outline),
+    );
+  }
+  // if profile detail is available, show profile picture accordingly
+  if (profileDetail.profilePhotoUrl == null) {
+    final initials = _getInitials(profileDetail.name);
+
+    return CircleAvatar(
+      backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
+      child: Text(initials.isEmpty ? '' : initials),
+    );
+  }
+
+  // if profile photo url exists
+  return CircleAvatar(
+    backgroundImage: NetworkImage(profileDetail.profilePhotoUrl!),
+  );
 }

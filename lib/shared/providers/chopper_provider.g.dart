@@ -52,7 +52,7 @@ final class ChopperClientProvider
   }
 }
 
-String _$chopperClientHash() => r'86df1a653132f09e0a725e618134c58f25e2e2f9';
+String _$chopperClientHash() => r'd56055c69c10ff638c5d8514f7a3c0c90d2c7193';
 
 @ProviderFor(authService)
 final authServiceProvider = AuthServiceProvider._();

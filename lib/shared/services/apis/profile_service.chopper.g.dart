@@ -19,9 +19,9 @@ final class _$ProfileService extends ProfileService {
   final Type definitionType = ProfileService;
 
   @override
-  Future<Response<dynamic>> getProfile() {
+  Future<Response<ProfileResponse>> getProfile() {
     final Uri $url = Uri.parse('/api/v1/profile');
     final Request $request = Request('GET', $url, client.baseUrl);
-    return client.send<dynamic, dynamic>($request);
+    return client.send<ProfileResponse, ProfileResponse>($request);
   }
 }
