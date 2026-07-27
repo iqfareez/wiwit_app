@@ -80,10 +80,13 @@ String _getInitials(String? name) {
 
 /// Build avatar widget based on user's data
 Widget _buildAvatar(BuildContext context, ProfileResponse? profileDetail) {
+  final avatarBgColor = Theme.of(context).colorScheme.tertiary;
+  final avatarFgColor = Theme.of(context).colorScheme.onTertiary;
+
   if (profileDetail == null) {
     return CircleAvatar(
-      backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
-      child: const Icon(Icons.person_outline),
+      backgroundColor: avatarBgColor,
+      child: Icon(Icons.person_outline, color: avatarFgColor),
     );
   }
   // if profile detail is available, show profile picture accordingly
@@ -91,8 +94,11 @@ Widget _buildAvatar(BuildContext context, ProfileResponse? profileDetail) {
     final initials = _getInitials(profileDetail.name);
 
     return CircleAvatar(
-      backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
-      child: Text(initials.isEmpty ? '' : initials),
+      backgroundColor: avatarBgColor,
+      child: Text(
+        initials.isEmpty ? '' : initials,
+        style: TextStyle(color: avatarFgColor, fontWeight: .bold),
+      ),
     );
   }
 
