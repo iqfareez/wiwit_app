@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
+import '../../shared/models/wiwit_api/profile/profile_response.dart';
 import '../../shared/models/wiwit_api/transactions/transaction_response.dart';
 import '../../shared/providers/chopper_provider.dart';
 import 'components/add_transaction_sheet.dart';
@@ -26,18 +27,23 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
   static const _itemSlideOffset = Offset(0, -0.25);
   static const _spinnerRadius = 7.0;
   static const _spinnerFadeDuration = Duration(milliseconds: 200);
+  static const _morningEndHour = 12;
+  static const _afternoonEndHour = 17;
+  static const _eveningEndHour = 21;
 
   final _listKey = GlobalKey<AnimatedListState>();
   final _transactions = <TransactionResponse>[];
   var _status = _ListStatus.loading;
   var _isRefreshing = false;
   String? _errorMessage;
+  ProfileResponse? _userProfile;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _loadTransactions();
+    _loadProfile();
   }
 
   @override
@@ -95,6 +101,18 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
 
       _replaceTransactions(result.data!);
     });
+  }
+
+  /// Fetches the profile name shown in the greeting.
+  Future<void> _loadProfile() async {
+    final response = await ref.read(profileServiceProvider).getProfile();
+    if (!response.isSuccessful) return;
+
+    final profileDetail = response.body;
+
+    if (!mounted || profileDetail == null) return;
+
+    setState(() => _userProfile = profileDetail);
   }
 
   /// Refetches and animates only what actually changed
@@ -187,6 +205,17 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
     );
   }
 
+  /// Picks a greeting based on the current hour.
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+
+    if (hour < _morningEndHour) return 'Good Morning';
+    if (hour < _afternoonEndHour) return 'Good Afternoon';
+    if (hour < _eveningEndHour) return 'Good Evening';
+
+    return 'Good Night';
+  }
+
   Widget _buildAnimatedTile(
     TransactionResponse transaction,
     Animation<double> animation,
@@ -247,7 +276,10 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const HomeHeader(name: 'Fareez'),
+                HomeHeader(
+                  greeting: _getGreeting(),
+                  profileDetail: _userProfile,
+                ),
                 const Gap(12),
                 Row(
                   children: [
