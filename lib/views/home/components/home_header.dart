@@ -89,7 +89,8 @@ Widget _buildAvatar(BuildContext context, ProfileResponse? profileDetail) {
       child: Icon(Icons.person_outline, color: avatarFgColor),
     );
   }
-  // if profile detail is available, show profile picture accordingly
+
+  // if no profile picture, display user's initial
   if (profileDetail.profilePhotoUrl == null) {
     final initials = _getInitials(profileDetail.name);
 
@@ -102,7 +103,7 @@ Widget _buildAvatar(BuildContext context, ProfileResponse? profileDetail) {
     );
   }
 
-  // if profile photo url exists
+  // show profile picture
   return CircleAvatar(
     backgroundImage: NetworkImage(profileDetail.profilePhotoUrl!),
   );
