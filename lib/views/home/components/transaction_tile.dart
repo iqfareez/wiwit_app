@@ -5,15 +5,19 @@ import '../../../shared/models/wiwit_api/transactions/transaction_response.dart'
 
 /// A single transaction row in the recent transactions list.
 class TransactionTile extends StatelessWidget {
-  const TransactionTile({super.key, required this.transaction});
+  const TransactionTile({super.key, required this.transaction, this.onTap});
 
   final TransactionResponse transaction;
+
+  /// Opens the detail sheet for this row.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final isIncome = transaction.type == TransactionType.income;
 
     return Card(
+      clipBehavior: .antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: ListTile(
         title: Text(
@@ -45,6 +49,7 @@ class TransactionTile extends StatelessWidget {
             ),
           ],
         ),
+        onTap: onTap,
       ),
     );
   }

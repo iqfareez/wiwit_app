@@ -7,8 +7,9 @@ import 'package:gap/gap.dart';
 import '../../shared/models/wiwit_api/profile/profile_response.dart';
 import '../../shared/models/wiwit_api/transactions/transaction_response.dart';
 import '../../shared/providers/chopper_provider.dart';
-import 'components/add_transaction_sheet.dart';
 import 'components/home_header.dart';
+import 'components/transaction_detail_sheet.dart';
+import 'components/transaction_form_sheet.dart';
 import 'components/transaction_tile.dart';
 
 /// The states the recent transactions list can be in.
@@ -196,14 +197,32 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
     }
   }
 
-  void _showAddTransactionSheet() {
+  void _showTransactionForm({TransactionResponse? transaction}) {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       showDragHandle: false,
       enableDrag: false,
-      builder: (_) => AddTransactionSheet(onSaved: _refreshTransactions),
+      builder: (_) => TransactionFormSheet(
+        transaction: transaction,
+        onSaved: _refreshTransactions,
+      ),
     );
+  }
+
+  /// Shows the read only detail, then hands over to the form when the user
+  /// taps Edit from there.
+  Future<void> _showTransactionDetail(TransactionResponse transaction) async {
+    final wantsEdit = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: false,
+      builder: (_) => TransactionDetailSheet(transaction: transaction),
+    );
+
+    if (wantsEdit != true || !mounted) return;
+
+    _showTransactionForm(transaction: transaction);
   }
 
   /// Picks a greeting based on the current hour.
@@ -235,7 +254,10 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
             begin: _itemSlideOffset,
             end: Offset.zero,
           ).animate(curved),
-          child: TransactionTile(transaction: transaction),
+          child: TransactionTile(
+            transaction: transaction,
+            onTap: () => _showTransactionDetail(transaction),
+          ),
         ),
       ),
     );
@@ -321,7 +343,7 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _showAddTransactionSheet,
+        onPressed: _showTransactionForm,
         tooltip: 'Add Transaction',
         child: const Icon(Icons.add),
       ),

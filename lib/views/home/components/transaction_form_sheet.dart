@@ -9,20 +9,28 @@ import '../../../shared/models/wiwit_api/enums.dart';
 import '../../../shared/models/wiwit_api/transactions/add_transaction_request.dart';
 import '../../../shared/models/wiwit_api/transactions/transaction_response.dart';
 import '../../../shared/providers/chopper_provider.dart';
+import '../../../shared/utils/format_utils.dart';
 import 'section_label.dart';
 
-/// The UI for adding transaction record
-class AddTransactionSheet extends ConsumerStatefulWidget {
-  const AddTransactionSheet({super.key, required this.onSaved});
+/// The UI for adding or editing a [transaction] record
+class TransactionFormSheet extends ConsumerStatefulWidget {
+  const TransactionFormSheet({
+    super.key,
+    required this.onSaved,
+    this.transaction,
+  });
 
   final VoidCallback onSaved;
 
+  /// The record being edited, or null when adding a new one.
+  final TransactionResponse? transaction;
+
   @override
-  ConsumerState<AddTransactionSheet> createState() =>
-      _AddTransactionSheetState();
+  ConsumerState<TransactionFormSheet> createState() =>
+      _TransactionFormSheetState();
 }
 
-class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
+class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
   /// How many category chips stay in front of the "Show all" chip.
   static const _topCategoryCount = 4;
 
@@ -35,6 +43,8 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   final _notesController = TextEditingController();
   late final Future<List<CategoryResponse>> _categories;
   late final DateTime _today;
+  late final int _initialAmountInCents;
+  late final DateTime _initialDate;
   late DateTime _date;
   var _type = TransactionType.expense;
   int? _categoryId;
@@ -42,12 +52,35 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   var _showNotes = false;
   var _isSaving = false;
 
+  bool get _isEditing => widget.transaction != null;
+
   @override
   void initState() {
     super.initState();
     _today = DateUtils.dateOnly(DateTime.now());
-    _date = _today;
     _categories = _loadCategories();
+
+    final transaction = widget.transaction;
+    _initialAmountInCents = transaction == null
+        ? 0
+        : parseAmountInCents(transaction.amount);
+    _initialDate = transaction == null
+        ? _today
+        : DateUtils.dateOnly(
+            DateTime.tryParse(transaction.transactionDate) ?? _today,
+          );
+    _date = _initialDate;
+
+    if (transaction == null) return;
+
+    // Editing starts from what is already there, so the sheet reads as the
+    // record itself rather than a blank form.
+    _titleController.text = transaction.title;
+    _amountController.text = formatAmount(_initialAmountInCents);
+    _notesController.text = transaction.notes ?? '';
+    _type = transaction.type;
+    _categoryId = transaction.category?.id;
+    _showNotes = _notesController.text.trim().isNotEmpty;
   }
 
   @override
@@ -64,14 +97,26 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
     return digits.isEmpty ? 0 : int.parse(digits);
   }
 
-  /// Whether the user has anything worth warning them about before closing.
-  bool get _hasInput =>
-      _amountInCents > 0 ||
-      _titleController.text.trim().isNotEmpty ||
-      _notesController.text.trim().isNotEmpty ||
-      _categoryId != null ||
-      _date != _today ||
-      _type != TransactionType.expense;
+  /// Whether there is anything worth warning about before closing.
+  bool get _hasUnsavedChanges {
+    final transaction = widget.transaction;
+
+    if (transaction == null) {
+      return _amountInCents > 0 ||
+          _titleController.text.trim().isNotEmpty ||
+          _notesController.text.trim().isNotEmpty ||
+          _categoryId != null ||
+          _date != _today ||
+          _type != TransactionType.expense;
+    }
+
+    return _amountInCents != _initialAmountInCents ||
+        _titleController.text.trim() != transaction.title ||
+        _notesController.text.trim() != (transaction.notes ?? '').trim() ||
+        _categoryId != transaction.category?.id ||
+        _date != _initialDate ||
+        _type != transaction.type;
+  }
 
   /// Loads the categories, most used first, so the chips in front of
   /// "Show all" are the ones the user actually reaches for.
@@ -151,7 +196,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   Future<void> _confirmClose() async {
     if (_isSaving) return;
 
-    if (!_hasInput) {
+    if (!_hasUnsavedChanges) {
       Navigator.pop(context);
       return;
     }
@@ -159,7 +204,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
     final discarded = await showDialog<bool>(
       context: context,
       builder: (_) => ConfirmDialog(
-        title: 'Discard transaction?',
+        title: _isEditing ? 'Discard changes?' : 'Discard transaction?',
         message: 'What you entered will not be saved.',
         confirmLabel: 'Discard',
         action: () async {},
@@ -171,41 +216,75 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
     Navigator.pop(context);
   }
 
+  /// Creates or updates, depending on how the sheet was opened, and reports
+  /// back only what the sheet needs to know.
+  Future<({bool isSuccessful, int statusCode})> _submit(
+    AddTransactionRequest request,
+  ) async {
+    final service = ref.read(transactionServiceProvider);
+    final transaction = widget.transaction;
+
+    if (transaction == null) {
+      final response = await service.createTransaction(request);
+
+      return (
+        isSuccessful: response.isSuccessful,
+        statusCode: response.statusCode,
+      );
+    }
+
+    // Sending the create payload keeps the field names in one place, and it
+    // clears whatever the user emptied out.
+    final response = await service.updateTransaction(
+      transaction.id,
+      request.toJson(),
+    );
+
+    return (
+      isSuccessful: response.isSuccessful,
+      statusCode: response.statusCode,
+    );
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSaving = true);
-    final response = await ref
-        .read(transactionServiceProvider)
-        .createTransaction(
-          AddTransactionRequest(
-            title: _titleController.text.trim(),
-            amount: _amountInCents / 100,
-            type: _type,
-            categoryId: _categoryId,
-            notes: _notesController.text.trim().isEmpty
-                ? null
-                : _notesController.text.trim(),
-            transactionDate: _date,
-          ),
-        );
+    final notes = _notesController.text.trim();
+    final result = await _submit(
+      AddTransactionRequest(
+        title: _titleController.text.trim(),
+        amount: _amountInCents / 100,
+        type: _type,
+        categoryId: _categoryId,
+        notes: notes.isEmpty ? null : notes,
+        transactionDate: _date,
+      ),
+    );
 
     if (!mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _isSaving = false);
 
-    if (response.isSuccessful) {
+    if (result.isSuccessful) {
       widget.onSaved();
       Navigator.pop(context);
       messenger.showSnackBar(
-        const SnackBar(content: Text('Transaction added.')),
+        SnackBar(
+          content: Text(
+            _isEditing ? 'Transaction updated.' : 'Transaction added.',
+          ),
+        ),
       );
       return;
     }
 
     messenger.showSnackBar(
       SnackBar(
-        content: Text('Could not add transaction (${response.statusCode}).'),
+        content: Text(
+          'Could not ${_isEditing ? 'update' : 'add'} transaction '
+          '(${result.statusCode}).',
+        ),
       ),
     );
   }
@@ -290,7 +369,7 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
         ChoiceChip(
           // Icon only until a date is picked, then it doubles as the readout.
           label: isPickedDate
-              ? Text(_formatDate(_date))
+              ? Text(formatDate(_date))
               : const Icon(Icons.calendar_today_outlined, size: 18),
           selected: isPickedDate,
           showCheckmark: false,
@@ -316,7 +395,9 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
     return TextFormField(
       controller: _notesController,
       enabled: !_isSaving,
-      autofocus: true,
+      // Editing opens with notes already filled in, so stealing focus there
+      // would just cover the sheet with the keyboard.
+      autofocus: !_isEditing,
       textCapitalization: TextCapitalization.sentences,
       maxLines: 2,
       decoration: inputDecoration.copyWith(
@@ -386,10 +467,10 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
                   const Gap(20),
                   Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'Add transaction',
-                          style: TextStyle(
+                          _isEditing ? 'Edit transaction' : 'Add transaction',
+                          style: const TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w700,
                           ),
@@ -515,24 +596,6 @@ class _AddTransactionSheetState extends ConsumerState<AddTransactionSheet> {
   }
 }
 
-/// Formats whole cents the way the amount field shows them, e.g. `1,234.50`.
-String _formatAmount(int cents) {
-  final whole = (cents ~/ 100).toString();
-  final fraction = (cents % 100).toString().padLeft(2, '0');
-  final grouped = StringBuffer();
-
-  for (var index = 0; index < whole.length; index++) {
-    if (index > 0 && (whole.length - index) % 3 == 0) grouped.write(',');
-
-    grouped.write(whole[index]);
-  }
-
-  return '$grouped.$fraction';
-}
-
-String _formatDate(DateTime date) =>
-    '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
-
 /// Fills the amount from the right, so every keystroke pushes the digits up a
 /// column: `3` is 0.03, `30` is 0.30, `300` is 3.00.
 class _AmountInputFormatter extends TextInputFormatter {
@@ -552,7 +615,7 @@ class _AmountInputFormatter extends TextInputFormatter {
     if (digits.isEmpty) return const TextEditingValue();
     if (digits.length > _maxDigits) return oldValue;
 
-    final text = _formatAmount(int.parse(digits));
+    final text = formatAmount(int.parse(digits));
 
     // The caret belongs at the end, since typing only ever appends.
     return TextEditingValue(
