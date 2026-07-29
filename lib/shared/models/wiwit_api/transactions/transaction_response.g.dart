@@ -18,7 +18,7 @@ TransactionResponse _$TransactionResponseFromJson(Map<String, dynamic> json) =>
               json['category'] as Map<String, dynamic>,
             ),
       notes: json['notes'] as String?,
-      transactionDate: json['transaction_date'] as String,
+      transactionDate: DateTime.parse(json['transaction_date'] as String),
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -32,7 +32,7 @@ Map<String, dynamic> _$TransactionResponseToJson(
   'amount': instance.amount,
   'category': instance.category,
   'notes': instance.notes,
-  'transaction_date': instance.transactionDate,
+  'transaction_date': instance.transactionDate.toIso8601String(),
   'created_at': instance.createdAt.toIso8601String(),
   'updated_at': instance.updatedAt.toIso8601String(),
 };

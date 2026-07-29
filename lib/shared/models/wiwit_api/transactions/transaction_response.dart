@@ -13,7 +13,7 @@ class TransactionResponse {
   final TransactionCategoryResponse? category;
   final String? notes;
   @JsonKey(name: 'transaction_date')
-  final String transactionDate;
+  final DateTime transactionDate;
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
   @JsonKey(name: 'updated_at')

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../shared/models/wiwit_api/enums.dart';
 import '../../../shared/models/wiwit_api/transactions/transaction_response.dart';
+import '../../../shared/utils/format_utils.dart';
 
 /// A single transaction row in the recent transactions list.
 class TransactionTile extends StatelessWidget {
@@ -41,7 +42,7 @@ class TransactionTile extends StatelessWidget {
               ),
             ),
             Text(
-              transaction.transactionDate,
+              formatRelativeDate(transaction.transactionDate),
               style: const TextStyle(
                 fontSize: 11.5,
                 fontWeight: FontWeight.normal,

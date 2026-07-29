@@ -66,9 +66,7 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
         : parseAmountInCents(transaction.amount);
     _initialDate = transaction == null
         ? _today
-        : DateUtils.dateOnly(
-            DateTime.tryParse(transaction.transactionDate) ?? _today,
-          );
+        : DateUtils.dateOnly(transaction.transactionDate);
     _date = _initialDate;
 
     if (transaction == null) return;

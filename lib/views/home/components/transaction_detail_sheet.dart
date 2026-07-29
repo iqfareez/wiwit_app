@@ -51,9 +51,7 @@ class TransactionDetailSheet extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final isIncome = transaction.type == TransactionType.income;
     final notes = transaction.notes?.trim() ?? '';
-    final date =
-        DateTime.tryParse(transaction.transactionDate) ??
-        transaction.createdAt.toLocal();
+    final date = transaction.transactionDate;
 
     return SafeArea(
       top: false,
