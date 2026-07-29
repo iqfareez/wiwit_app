@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
+import '../../shared/components/confirm_dialog.dart';
 import '../../shared/providers/auth_provider.dart';
 import '../../shared/providers/server_url_provider.dart';
 import '../../shared/providers/theme_mode_provider.dart';
 import '../../shared/utils/theme_mode_utils.dart';
-import 'components/confirm_dialog.dart';
 import 'components/settings_section_card.dart';
 import 'components/settings_section_label.dart';
 import 'components/settings_tile.dart';
