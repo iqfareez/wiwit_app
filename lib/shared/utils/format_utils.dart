@@ -22,10 +22,11 @@ int parseAmountInCents(String amount) {
   return (value * 100).round();
 }
 
+/// Format date to dd/MM/yyyy
 String formatDate(DateTime date) =>
     '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
 
-/// Names the day when it is one the user thinks of by name.
+/// Format relative day
 String formatRelativeDate(DateTime date) {
   final today = DateUtils.dateOnly(DateTime.now());
   final day = DateUtils.dateOnly(date);
