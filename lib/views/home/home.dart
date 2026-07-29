@@ -201,6 +201,7 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
       context: context,
       isScrollControlled: true,
       showDragHandle: false,
+      enableDrag: false,
       builder: (_) => AddTransactionSheet(onSaved: _refreshTransactions),
     );
   }
