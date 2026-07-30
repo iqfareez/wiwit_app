@@ -1,38 +1,131 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
+import '../../../shared/components/confirm_dialog.dart';
 import '../../../shared/models/wiwit_api/enums.dart';
 import '../../../shared/models/wiwit_api/transactions/transaction_response.dart';
+import '../../../shared/providers/chopper_provider.dart';
 import '../../../shared/utils/format_utils.dart';
-import 'section_label.dart';
+
+/// What the detail sheet was closed for.
+enum TransactionDetailResult { edit, deleted }
 
 /// The read only view of a transaction.
 ///
-/// Pops with `true` when the user asks to edit.
-class TransactionDetailSheet extends StatelessWidget {
+/// Pops with [TransactionDetailResult.edit] or [TransactionDetailResult.deleted]
+/// for further actions.
+class TransactionDetailSheet extends ConsumerStatefulWidget {
   const TransactionDetailSheet({super.key, required this.transaction});
 
   final TransactionResponse transaction;
 
-  /// The same filled pill the form uses for its text fields, minus the input.
-  Widget _buildValueBox(BuildContext context, String value) {
+  @override
+  ConsumerState<TransactionDetailSheet> createState() =>
+      _TransactionDetailSheetState();
+}
+
+class _TransactionDetailSheetState
+    extends ConsumerState<TransactionDetailSheet> {
+  static const _actionHeight = 52.0;
+
+  Future<void> _confirmDelete() async {
+    final transaction = widget.transaction;
+    String? failure;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (_) => ConfirmDialog(
+        title: 'Delete this transaction?',
+        message: "This transaction will be deleted. This can't be undone.",
+        confirmLabel: 'Delete',
+        action: () async {
+          try {
+            final response = await ref
+                .read(transactionServiceProvider)
+                .deleteTransaction(transaction.id);
+
+            if (response.isSuccessful) return;
+
+            failure = 'Could not delete transaction (${response.statusCode}).';
+          } catch (error) {
+            failure = '$error';
+          }
+        },
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+
+    // A failed delete leaves the sheet open, so the record is still there to
+    // try again on.
+    if (failure != null) {
+      messenger.showSnackBar(SnackBar(content: Text(failure!)));
+      return;
+    }
+
+    Navigator.pop(context, TransactionDetailResult.deleted);
+    messenger.showSnackBar(
+      const SnackBar(content: Text('Transaction deleted.')),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context) {
+    return Row(
+      children: [
+        // The same heading the form sheet wears, so the two read as one pair.
+        const Expanded(
+          child: Text(
+            'Transaction',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+          ),
+        ),
+        IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.close),
+          tooltip: 'Close',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAmount(BuildContext context, {required bool isIncome}) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      decoration: BoxDecoration(
-        color: colorScheme.secondaryContainer,
-        borderRadius: BorderRadius.circular(28),
-      ),
-      child: Text(value, style: const TextStyle(fontSize: 15)),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Text(
+          '${isIncome ? '+' : '-'}RM',
+          style: TextStyle(
+            color: colorScheme.onSurfaceVariant,
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const Gap(8),
+        Flexible(
+          child: Text(
+            formatAmount(parseAmountInCents(widget.transaction.amount)),
+            style: TextStyle(
+              color: isIncome ? Colors.green : Colors.red,
+              fontSize: 36,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildFootnote(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final createdAt = transaction.createdAt.toLocal();
-    final updatedAt = transaction.updatedAt.toLocal();
+    final createdAt = widget.transaction.createdAt.toLocal();
+    final updatedAt = widget.transaction.updatedAt.toLocal();
 
     // Every record updates itself on save, so only call it edited once the
     // timestamps have actually drifted apart.
@@ -41,17 +134,53 @@ class TransactionDetailSheet extends StatelessWidget {
     return Text(
       'Added ${formatDate(createdAt)}'
       '${wasEdited ? '  ·  Edited ${formatDate(updatedAt)}' : ''}',
-      textAlign: TextAlign.center,
       style: TextStyle(fontSize: 12, color: colorScheme.outline),
+    );
+  }
+
+  Widget _buildActions(BuildContext context, {required bool isIncome}) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Row(
+      children: [
+        Expanded(
+          child: FilledButton.icon(
+            onPressed: () =>
+                Navigator.pop(context, TransactionDetailResult.edit),
+            style: FilledButton.styleFrom(
+              backgroundColor: isIncome
+                  ? colorScheme.primary
+                  : colorScheme.secondary,
+              minimumSize: const Size.fromHeight(_actionHeight),
+            ),
+            icon: const Icon(Icons.edit_outlined, size: 18),
+            label: const Text('Edit'),
+          ),
+        ),
+        const Gap(10),
+        SizedBox.square(
+          dimension: _actionHeight,
+          child: IconButton.filled(
+            onPressed: _confirmDelete,
+            style: IconButton.styleFrom(
+              backgroundColor: colorScheme.errorContainer,
+              foregroundColor: colorScheme.onErrorContainer,
+              side: BorderSide(color: colorScheme.error.withValues(alpha: .3)),
+            ),
+            icon: const Icon(Icons.delete_outline),
+            tooltip: 'Delete',
+          ),
+        ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final transaction = widget.transaction;
     final isIncome = transaction.type == TransactionType.income;
     final notes = transaction.notes?.trim() ?? '';
-    final date = transaction.transactionDate;
 
     return SafeArea(
       top: false,
@@ -72,97 +201,47 @@ class TransactionDetailSheet extends StatelessWidget {
                   ),
                 ),
               ),
-              const Gap(20),
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'Transaction',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  FilledButton.icon(
-                    onPressed: () => Navigator.pop(context, true),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: isIncome
-                          ? colorScheme.primary
-                          : colorScheme.secondary,
-                    ),
-                    icon: const Icon(Icons.edit_outlined, size: 18),
-                    label: const Text('Edit'),
-                  ),
-                ],
-              ),
-              const Gap(16),
-              Center(
-                child: Chip(
-                  avatar: Icon(
-                    isIncome ? Icons.arrow_downward : Icons.arrow_upward,
-                    size: 18,
-                  ),
-                  label: Text(isIncome ? 'Income' : 'Expense'),
-                ),
-              ),
-              const Gap(16),
+              const Gap(8),
+              _buildHeader(context),
+              const Gap(4),
+              _buildAmount(context, isIncome: isIncome),
+              const Gap(12),
               Text(
-                'Amount',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: colorScheme.onSurfaceVariant),
+                transaction.title,
+                style: const TextStyle(
+                  fontSize: 21,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+              const Gap(18),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
                 children: [
-                  Text(
-                    '${isIncome ? '+' : '-'}RM',
-                    style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  Chip(
+                    label: Text(transaction.category?.name ?? 'Uncategorized'),
                   ),
-                  const Gap(8),
-                  Flexible(
-                    child: Text(
-                      formatAmount(parseAmountInCents(transaction.amount)),
-                      style: TextStyle(
-                        color: isIncome ? Colors.green : Colors.red,
-                        fontSize: 36,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
+                  Chip(
+                    avatar: const Icon(Icons.calendar_today_outlined, size: 18),
+                    label: Text(formatLongDate(transaction.transactionDate)),
                   ),
                 ],
-              ),
-              const Gap(20),
-              SectionLabel(label: 'Title'),
-              _buildValueBox(context, transaction.title),
-              const Gap(16),
-              SectionLabel(label: 'Category'),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Chip(
-                  label: Text(transaction.category?.name ?? 'Uncategorized'),
-                ),
-              ),
-              const Gap(16),
-              SectionLabel(label: 'Date'),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Chip(
-                  avatar: const Icon(Icons.calendar_today_outlined, size: 18),
-                  label: Text(formatRelativeDate(date)),
-                ),
               ),
               if (notes.isNotEmpty) ...[
-                const Gap(16),
-                SectionLabel(label: 'Notes'),
-                _buildValueBox(context, notes),
+                const Gap(14),
+                Text(
+                  notes,
+                  style: TextStyle(
+                    fontSize: 15,
+                    height: 1.5,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ],
-              const Gap(20),
+              const Gap(14),
               _buildFootnote(context),
+              const Gap(20),
+              _buildActions(context, isIncome: isIncome),
             ],
           ),
         ),

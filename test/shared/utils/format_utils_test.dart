@@ -41,6 +41,13 @@ void main() {
     });
   });
 
+  group('long date format', () {
+    test('spells out weekday and month', () {
+      expect(formatLongDate(DateTime(2026, 7, 29)), 'Wed, 29 Jul 2026');
+      expect(formatLongDate(DateTime(2026, 12, 25)), 'Fri, 25 Dec 2026');
+    });
+  });
+
   group('date format', () {
     test('pads day and month', () {
       expect(formatDate(DateTime(2026, 7, 9)), '09/07/2026');

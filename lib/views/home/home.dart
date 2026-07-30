@@ -210,19 +210,23 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
     );
   }
 
-  /// Shows the read only detail, then hands over to the form when the user
-  /// taps Edit from there.
+  /// Shows the read only detail.
   Future<void> _showTransactionDetail(TransactionResponse transaction) async {
-    final wantsEdit = await showModalBottomSheet<bool>(
+    final result = await showModalBottomSheet<TransactionDetailResult>(
       context: context,
       isScrollControlled: true,
       showDragHandle: false,
       builder: (_) => TransactionDetailSheet(transaction: transaction),
     );
 
-    if (wantsEdit != true || !mounted) return;
+    if (result == null || !mounted) return;
 
-    _showTransactionForm(transaction: transaction);
+    switch (result) {
+      case TransactionDetailResult.edit:
+        _showTransactionForm(transaction: transaction);
+      case TransactionDetailResult.deleted:
+        _refreshTransactions();
+    }
   }
 
   /// Picks a greeting based on the current hour.

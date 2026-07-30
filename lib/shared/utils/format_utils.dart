@@ -1,19 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+
+final _amountFormat = NumberFormat('#,##0.00', 'en_US');
+final _dateFormat = DateFormat('dd/MM/yyyy', 'en_US');
+final _longDateFormat = DateFormat('EEE, d MMM yyyy', 'en_US');
 
 /// Formats whole cents the way the amount field shows them, e.g. `1,234.50`.
-String formatAmount(int cents) {
-  final whole = (cents ~/ 100).toString();
-  final fraction = (cents % 100).toString().padLeft(2, '0');
-  final grouped = StringBuffer();
-
-  for (var index = 0; index < whole.length; index++) {
-    if (index > 0 && (whole.length - index) % 3 == 0) grouped.write(',');
-
-    grouped.write(whole[index]);
-  }
-
-  return '$grouped.$fraction';
-}
+String formatAmount(int cents) => _amountFormat.format(cents / 100);
 
 /// Reads an amount the API sent us, e.g. `3.5`, as whole cents.
 int parseAmountInCents(String amount) {
@@ -23,8 +16,11 @@ int parseAmountInCents(String amount) {
 }
 
 /// Format date to dd/MM/yyyy
-String formatDate(DateTime date) =>
-    '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
+String formatDate(DateTime date) => _dateFormat.format(date);
+
+/// The full date the way the detail sheet spells it out, e.g. `Wed, 29 Jul
+/// 2026`.
+String formatLongDate(DateTime date) => _longDateFormat.format(date);
 
 /// Format relative day
 String formatRelativeDate(DateTime date) {

@@ -469,7 +469,7 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
                         child: Text(
                           _isEditing ? 'Edit transaction' : 'Add transaction',
                           style: const TextStyle(
-                            fontSize: 20,
+                            fontSize: 17,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
