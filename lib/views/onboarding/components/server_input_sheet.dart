@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 
+import '../../../shared/utils/server_url_utils.dart';
+
 /// Persistent bottom sheet for [ServerSetPage].
 class ServerInputSheet extends StatelessWidget {
   const ServerInputSheet({
@@ -53,15 +55,10 @@ class ServerInputSheet extends StatelessWidget {
                 ),
                 fillColor: Theme.of(context).colorScheme.secondaryContainer,
                 filled: true,
-                hintText: 'https://your-server.com',
+                hintText: 'your-server.com or 192.168.1.5:8080',
                 prefixIcon: const Icon(Icons.dns_outlined),
               ),
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) {
-                  return 'Please enter your server URL';
-                }
-                return null;
-              },
+              validator: validateServerUrl,
             ),
             const Gap(16),
             SizedBox(

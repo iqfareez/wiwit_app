@@ -25,18 +25,6 @@ class _ServerSetPageState extends ConsumerState<ServerSetPage> {
     super.dispose();
   }
 
-  /// Prepends `https://` when no scheme is present and drops trailing slashes.
-  String _normalizeUrl(String raw) {
-    var url = raw.trim();
-    if (!url.startsWith(RegExp(r'https?://'))) {
-      url = 'https://$url';
-    }
-    while (url.endsWith('/')) {
-      url = url.substring(0, url.length - 1);
-    }
-    return url;
-  }
-
   Future<void> _connect() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_isLoading) return;
@@ -45,12 +33,10 @@ class _ServerSetPageState extends ConsumerState<ServerSetPage> {
     setState(() => _isLoading = true);
 
     try {
-      final serverUrl = _normalizeUrl(_urlController.text);
-
-      final reachable = await isServerReachable(serverUrl);
+      final serverUrl = await resolveServerUrl(_urlController.text);
       if (!mounted) return;
 
-      if (!reachable) {
+      if (serverUrl == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Couldn't reach that server. Check the URL."),
