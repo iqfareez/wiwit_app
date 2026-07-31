@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +8,7 @@ import 'package:gap/gap.dart';
 import '../../../shared/components/confirm_dialog.dart';
 import '../../../shared/models/wiwit_api/categories/category_response.dart';
 import '../../../shared/models/wiwit_api/enums.dart';
+import '../../../shared/models/wiwit_api/problem_details.dart';
 import '../../../shared/models/wiwit_api/transactions/add_transaction_request.dart';
 import '../../../shared/models/wiwit_api/transactions/transaction_response.dart';
 import '../../../shared/providers/chopper_provider.dart';
@@ -120,31 +123,36 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
   /// "Show all" are the ones the user actually reaches for.
   /// TODO: improvement oppurtunity for the api provide the amount
   Future<List<CategoryResponse>> _loadCategories() async {
-    final (categoryResponse, transactionResponse) = await (
-      ref.read(categoryServiceProvider).getCategories(perPage: 100),
-      ref
-          .read(transactionServiceProvider)
-          .getTransactions(perPage: _usageSampleSize),
-    ).wait;
+    final categoriesFuture = ref
+        .read(categoryServiceProvider)
+        .getCategories(perPage: 100);
+    final transactionsFuture = ref
+        .read(transactionServiceProvider)
+        .getTransactions(perPage: _usageSampleSize);
 
-    if (!categoryResponse.isSuccessful) {
+    final List<CategoryResponse> categories;
+    try {
+      final categoryResponse = await categoriesFuture;
+      categories = categoryResponse.body?.data ?? [];
+    } on ProblemDetails {
       // TODO: Add toast says fetch categories failed
       return [];
     }
 
-    final categories = [...?categoryResponse.body?.data];
     final usageCount = <int, int>{};
 
-    // A failed lookup only costs us the ordering, so the chips still show.
-    if (transactionResponse.isSuccessful) {
-      final transactions =
-          transactionResponse.body?.data ?? const <TransactionResponse>[];
+    try {
+      final transactionResponse = await transactionsFuture;
+      final transactions = transactionResponse.body?.data ?? [];
       for (final transaction in transactions) {
         final categoryId = transaction.category?.id;
         if (categoryId == null) continue;
 
         usageCount[categoryId] = (usageCount[categoryId] ?? 0) + 1;
       }
+    } on ProblemDetails catch (e) {
+      // Ignored — falls back to alphabetical ordering.
+      log('Error occured: $e');
     }
 
     categories.sort((first, second) {
@@ -214,34 +222,19 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
     Navigator.pop(context);
   }
 
-  /// Creates or updates, depending on how the sheet was opened, and reports
-  /// back only what the sheet needs to know.
-  Future<({bool isSuccessful, int statusCode})> _submit(
-    AddTransactionRequest request,
-  ) async {
+  /// Creates or updates, depending on how the sheet was opened.
+  Future<void> _submit(AddTransactionRequest request) async {
     final service = ref.read(transactionServiceProvider);
     final transaction = widget.transaction;
 
     if (transaction == null) {
-      final response = await service.createTransaction(request);
-
-      return (
-        isSuccessful: response.isSuccessful,
-        statusCode: response.statusCode,
-      );
+      await service.createTransaction(request);
+      return;
     }
 
     // Sending the create payload keeps the field names in one place, and it
     // clears whatever the user emptied out.
-    final response = await service.updateTransaction(
-      transaction.id,
-      request.toJson(),
-    );
-
-    return (
-      isSuccessful: response.isSuccessful,
-      statusCode: response.statusCode,
-    );
+    await service.updateTransaction(transaction.id, request.toJson());
   }
 
   Future<void> _save() async {
@@ -249,39 +242,37 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
 
     setState(() => _isSaving = true);
     final notes = _notesController.text.trim();
-    final result = await _submit(
-      AddTransactionRequest(
-        title: _titleController.text.trim(),
-        amount: _amountInCents / 100,
-        type: _type,
-        categoryId: _categoryId,
-        notes: notes.isEmpty ? null : notes,
-        transactionDate: _date,
-      ),
-    );
+
+    try {
+      await _submit(
+        AddTransactionRequest(
+          title: _titleController.text.trim(),
+          amount: _amountInCents / 100,
+          type: _type,
+          categoryId: _categoryId,
+          notes: notes.isEmpty ? null : notes,
+          transactionDate: _date,
+        ),
+      );
+    } on ProblemDetails catch (error) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.detail)));
+      return;
+    }
 
     if (!mounted) return;
     final messenger = ScaffoldMessenger.of(context);
     setState(() => _isSaving = false);
 
-    if (result.isSuccessful) {
-      widget.onSaved();
-      Navigator.pop(context);
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(
-            _isEditing ? 'Transaction updated.' : 'Transaction added.',
-          ),
-        ),
-      );
-      return;
-    }
-
+    widget.onSaved();
+    Navigator.pop(context);
     messenger.showSnackBar(
       SnackBar(
         content: Text(
-          'Could not ${_isEditing ? 'update' : 'add'} transaction '
-          '(${result.statusCode}).',
+          _isEditing ? 'Transaction updated.' : 'Transaction added.',
         ),
       ),
     );

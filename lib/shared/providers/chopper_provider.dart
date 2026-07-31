@@ -13,6 +13,7 @@ import '../services/apis/profile_service.dart';
 import '../services/apis/transaction_service.dart';
 import '../services/networking/auth_interceptor.dart';
 import '../services/networking/json_serializable_converter.dart';
+import '../services/networking/problem_details_interceptor.dart';
 import 'auth_provider.dart';
 import 'server_url_provider.dart';
 
@@ -30,6 +31,15 @@ ChopperClient chopperClient(Ref ref) {
     throw StateError('No server URL configured.');
   }
 
+  final converter = JsonSerializableConverter({
+    LoginResponse: LoginResponse.fromJson,
+    CategoryListResponse: CategoryListResponse.fromJson,
+    CategoryResponse: CategoryResponse.fromJson,
+    TransactionListResponse: TransactionListResponse.fromJson,
+    TransactionResponse: TransactionResponse.fromJson,
+    ProfileResponse: ProfileResponse.fromJson,
+  });
+
   final client = ChopperClient(
     baseUrl: Uri.parse(serverUrl),
     services: [
@@ -38,15 +48,12 @@ ChopperClient chopperClient(Ref ref) {
       TransactionService.create(),
       ProfileService.create(),
     ],
-    converter: JsonSerializableConverter({
-      LoginResponse: LoginResponse.fromJson,
-      CategoryListResponse: CategoryListResponse.fromJson,
-      CategoryResponse: CategoryResponse.fromJson,
-      TransactionListResponse: TransactionListResponse.fromJson,
-      TransactionResponse: TransactionResponse.fromJson,
-      ProfileResponse: ProfileResponse.fromJson,
-    }),
-    interceptors: [AuthInterceptor(() => ref.read(authTokenProvider.future))],
+    converter: converter,
+    errorConverter: converter,
+    interceptors: [
+      AuthInterceptor(() => ref.read(authTokenProvider.future)),
+      const ProblemDetailsInterceptor(),
+    ],
   );
 
   ref.onDispose(client.dispose);

@@ -1,9 +1,11 @@
+import 'package:chopper/chopper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
 
+import '../../shared/models/wiwit_api/problem_details.dart';
 import '../../shared/models/wiwit_api/profile/profile_response.dart';
 import '../../shared/models/wiwit_api/transactions/transaction_response.dart';
 import '../../shared/providers/chopper_provider.dart';
@@ -69,17 +71,12 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
           .read(transactionServiceProvider)
           .getTransactions(perPage: _transactionsPerPage);
 
-      if (!response.isSuccessful) {
-        return (
-          data: null,
-          error: 'Could not load transactions (${response.statusCode}).',
-        );
-      }
-
       return (
         data: response.body?.data ?? <TransactionResponse>[],
         error: null,
       );
+    } on ProblemDetails catch (error) {
+      return (data: null, error: error.detail);
     } catch (error) {
       return (data: null, error: '$error');
     }
@@ -106,8 +103,12 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
 
   /// Fetches the profile name shown in the greeting.
   Future<void> _loadProfile() async {
-    final response = await ref.read(profileServiceProvider).getProfile();
-    if (!response.isSuccessful) return;
+    final Response<ProfileResponse> response;
+    try {
+      response = await ref.read(profileServiceProvider).getProfile();
+    } on ProblemDetails {
+      return;
+    }
 
     final profileDetail = response.body;
 

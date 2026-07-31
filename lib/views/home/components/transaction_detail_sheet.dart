@@ -4,6 +4,7 @@ import 'package:gap/gap.dart';
 
 import '../../../shared/components/confirm_dialog.dart';
 import '../../../shared/models/wiwit_api/enums.dart';
+import '../../../shared/models/wiwit_api/problem_details.dart';
 import '../../../shared/models/wiwit_api/transactions/transaction_response.dart';
 import '../../../shared/providers/chopper_provider.dart';
 import '../../../shared/utils/format_utils.dart';
@@ -42,13 +43,11 @@ class _TransactionDetailSheetState
         confirmLabel: 'Delete',
         action: () async {
           try {
-            final response = await ref
+            await ref
                 .read(transactionServiceProvider)
                 .deleteTransaction(transaction.id);
-
-            if (response.isSuccessful) return;
-
-            failure = 'Could not delete transaction (${response.statusCode}).';
+          } on ProblemDetails catch (error) {
+            failure = error.detail;
           } catch (error) {
             failure = '$error';
           }

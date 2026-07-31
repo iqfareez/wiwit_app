@@ -4,6 +4,7 @@ import 'package:gap/gap.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
 import '../../shared/models/wiwit_api/auth/login_request.dart';
+import '../../shared/models/wiwit_api/problem_details.dart';
 import '../../shared/providers/auth_provider.dart';
 import '../../shared/providers/chopper_provider.dart';
 import '../../shared/providers/server_url_provider.dart';
@@ -54,11 +55,6 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
       if (!mounted) return;
 
-      if (!response.isSuccessful) {
-        // TODO: make custom exception and parse data from api
-        throw Exception('Error when logging in');
-      }
-
       final token = response.body?.token;
       if (token == null || token.isEmpty) {
         throw Exception('The server did not return a token');
@@ -67,6 +63,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       // Storing the token is the whole navigation: the root view watches it
       // and swaps onboarding/login out for home.
       await ref.read(authTokenProvider.notifier).set(token);
+    } on ProblemDetails catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.detail)));
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(

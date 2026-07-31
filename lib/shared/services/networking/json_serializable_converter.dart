@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:chopper/chopper.dart';
 
+import '../../models/wiwit_api/problem_details.dart';
+
 typedef JsonFactory<T> = T Function(Map<String, dynamic> json);
 
 class JsonSerializableConverter extends JsonConverter {
@@ -15,8 +17,11 @@ class JsonSerializableConverter extends JsonConverter {
     return factory(values) as T;
   }
 
-  List<T> _decodeList<T>(Iterable values) =>
-      values.where((v) => v != null).cast<Map<String, dynamic>>().map((e) => _decodeMap<T>(e)!).toList();
+  List<T> _decodeList<T>(Iterable values) => values
+      .where((v) => v != null)
+      .cast<Map<String, dynamic>>()
+      .map((e) => _decodeMap<T>(e)!)
+      .toList();
 
   dynamic _decode<T>(dynamic entity) {
     if (entity is Iterable) return _decodeList<T>(entity);
@@ -25,7 +30,9 @@ class JsonSerializableConverter extends JsonConverter {
   }
 
   @override
-  FutureOr<Response<ResultType>> convertResponse<ResultType, Item>(Response response) async {
+  FutureOr<Response<ResultType>> convertResponse<ResultType, Item>(
+    Response response,
+  ) async {
     final jsonRes = await super.convertResponse(response);
     return jsonRes.copyWith<ResultType>(body: _decode<Item>(jsonRes.body));
   }
@@ -53,5 +60,21 @@ class JsonSerializableConverter extends JsonConverter {
       }
     } catch (_) {}
     return null;
+  }
+
+  /// Decodes an error response body into [ProblemDetails].
+  ///
+  /// Fallback to generic exception if error is not ProblemDetails shaped.
+  @override
+  FutureOr<Response> convertError<ResultType, Item>(Response response) async {
+    final decoded = await super.convertError(response);
+    final body = decoded.body;
+    if (body is! Map<String, dynamic>) return decoded;
+
+    try {
+      return decoded.copyWith(bodyError: ProblemDetails.fromJson(body));
+    } catch (_) {
+      return decoded;
+    }
   }
 }
