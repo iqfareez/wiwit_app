@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../shared/components/confirm_dialog.dart';
 import '../../shared/providers/auth_provider.dart';
@@ -21,6 +22,14 @@ class SettingsPage extends ConsumerStatefulWidget {
 }
 
 class _SettingsPageState extends ConsumerState<SettingsPage> {
+  late Future<PackageInfo> futurePackageInfo;
+
+  @override
+  void initState() {
+    super.initState();
+    futurePackageInfo = PackageInfo.fromPlatform();
+  }
+
   /// Asks for confirmation, then runs [action] while the dialog stays open so
   /// its confirm button can carry the progress indicator.
   ///
@@ -154,13 +163,22 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
               ),
               const Gap(32),
               Center(
-                child: Text(
-                  'Wiwit',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
-                  ),
+                child: FutureBuilder(
+                  future: futurePackageInfo,
+                  builder: (context, asyncSnapshot) {
+                    var textStyle = Theme.of(context).textTheme.bodySmall
+                        ?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                        );
+                    if (!asyncSnapshot.hasData) {
+                      return Text('Wiwit', style: textStyle);
+                    }
+                    var appVersion = asyncSnapshot.data?.version;
+                    var appName = asyncSnapshot.data?.appName;
+                    return Text('$appName v$appVersion', style: textStyle);
+                  },
                 ),
               ),
             ],
