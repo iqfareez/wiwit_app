@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../shared/components/profile_avatar_widget.dart';
+import '../../../shared/constants.dart';
 import '../../../shared/models/wiwit_api/profile/profile_response.dart';
 import '../../profile/settings_page.dart';
 
@@ -46,11 +48,19 @@ class HomeHeader extends StatelessWidget {
             mainAxisAlignment: .end,
             children: [
               IconButton(
-                onPressed: () => Navigator.of(
-                  context,
-                ).push(MaterialPageRoute(builder: (_) => const SettingsPage())),
+                onPressed: () {
+                  if (profileDetail == null) return;
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => SettingsPage(userProfile: profileDetail!),
+                    ),
+                  );
+                },
                 tooltip: 'Settings',
-                icon: _buildAvatar(context, profileDetail),
+                icon: Hero(
+                  tag: kProfilePictureHeroTag,
+                  child: ProfileAvatarWidget(profileDetail: profileDetail),
+                ),
               ),
             ],
           ),
@@ -58,53 +68,4 @@ class HomeHeader extends StatelessWidget {
       ],
     );
   }
-}
-
-/// Get initial from name. Max two letters only.
-String _getInitials(String? name) {
-  if (name == null || name.trim().isEmpty) {
-    return '';
-  }
-
-  final parts = name.trim().split(RegExp(r'\s+'));
-  final initials = <String>[];
-
-  for (final part in parts.take(2)) {
-    if (part.isNotEmpty) {
-      initials.add(part[0].toUpperCase());
-    }
-  }
-
-  return initials.join();
-}
-
-/// Build avatar widget based on user's data
-Widget _buildAvatar(BuildContext context, ProfileResponse? profileDetail) {
-  final avatarBgColor = Theme.of(context).colorScheme.tertiary;
-  final avatarFgColor = Theme.of(context).colorScheme.onTertiary;
-
-  if (profileDetail == null) {
-    return CircleAvatar(
-      backgroundColor: avatarBgColor,
-      child: Icon(Icons.person_outline, color: avatarFgColor),
-    );
-  }
-
-  // if no profile picture, display user's initial
-  if (profileDetail.profilePhotoUrl == null) {
-    final initials = _getInitials(profileDetail.name);
-
-    return CircleAvatar(
-      backgroundColor: avatarBgColor,
-      child: Text(
-        initials.isEmpty ? '' : initials,
-        style: TextStyle(color: avatarFgColor, fontWeight: .bold),
-      ),
-    );
-  }
-
-  // show profile picture
-  return CircleAvatar(
-    backgroundImage: NetworkImage(profileDetail.profilePhotoUrl!),
-  );
 }

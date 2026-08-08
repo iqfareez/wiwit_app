@@ -1,5 +1,29 @@
 import 'package:flutter/material.dart';
 
+/// Asks for confirmation, then runs [action] while the dialog stays open.
+///
+/// Returns whether the user went through with it.
+Future<bool> showConfirmDialog({
+  required BuildContext context,
+  required String title,
+  required String message,
+  required String confirmLabel,
+  required Future<void> Function() action,
+}) async {
+  final confirmed = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => ConfirmDialog(
+      title: title,
+      message: message,
+      confirmLabel: confirmLabel,
+      action: action,
+    ),
+  );
+
+  return confirmed ?? false;
+}
+
 /// Confirmation dialog that runs the action
 class ConfirmDialog extends StatefulWidget {
   const ConfirmDialog({

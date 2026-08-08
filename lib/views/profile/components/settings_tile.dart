@@ -8,6 +8,7 @@ class SettingsTile extends StatelessWidget {
     this.subtitle,
     this.onTap,
     this.isDestructive = false,
+    this.isCompact = false,
     super.key,
   });
 
@@ -18,6 +19,10 @@ class SettingsTile extends StatelessWidget {
 
   /// Paints the tile in the error palette for irreversible actions.
   final bool isDestructive;
+
+  /// Trims the row down for actions that sit alongside content rather than
+  /// heading their own section.
+  final bool isCompact;
 
   @override
   Widget build(BuildContext context) {
@@ -30,15 +35,20 @@ class SettingsTile extends StatelessWidget {
 
     return ListTile(
       onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      dense: isCompact,
+      visualDensity: isCompact ? VisualDensity.compact : null,
+      contentPadding: EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: isCompact ? 0 : 4,
+      ),
       leading: Container(
-        height: 40,
-        width: 40,
+        height: isCompact ? 34 : 40,
+        width: isCompact ? 34 : 40,
         decoration: BoxDecoration(
           color: iconBackground,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(isCompact ? 12 : 14),
         ),
-        child: Icon(icon, size: 20, color: foreground),
+        child: Icon(icon, size: isCompact ? 18 : 20, color: foreground),
       ),
       title: Text(
         title,

@@ -4,11 +4,13 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/wiwit_api/auth/login_response.dart';
 import '../models/wiwit_api/categories/category_list_response.dart';
 import '../models/wiwit_api/categories/category_response.dart';
+import '../models/wiwit_api/instance/instance_response.dart';
 import '../models/wiwit_api/profile/profile_response.dart';
 import '../models/wiwit_api/transactions/transaction_list_response.dart';
 import '../models/wiwit_api/transactions/transaction_response.dart';
 import '../services/apis/auth_service.dart';
 import '../services/apis/category_service.dart';
+import '../services/apis/instance_service.dart';
 import '../services/apis/profile_service.dart';
 import '../services/apis/transaction_service.dart';
 import '../services/networking/auth_interceptor.dart';
@@ -38,6 +40,7 @@ ChopperClient chopperClient(Ref ref) {
     TransactionListResponse: TransactionListResponse.fromJson,
     TransactionResponse: TransactionResponse.fromJson,
     ProfileResponse: ProfileResponse.fromJson,
+    InstanceResponse: InstanceResponse.fromJson,
   });
 
   final client = ChopperClient(
@@ -47,6 +50,7 @@ ChopperClient chopperClient(Ref ref) {
       CategoryService.create(),
       TransactionService.create(),
       ProfileService.create(),
+      InstanceService.create(),
     ],
     converter: converter,
     errorConverter: converter,
@@ -76,3 +80,7 @@ TransactionService transactionService(Ref ref) =>
 @Riverpod(keepAlive: true, retry: _neverRetry)
 ProfileService profileService(Ref ref) =>
     ref.watch(chopperClientProvider).getService<ProfileService>();
+
+@Riverpod(keepAlive: true, retry: _neverRetry)
+InstanceService instanceService(Ref ref) =>
+    ref.watch(chopperClientProvider).getService<InstanceService>();
