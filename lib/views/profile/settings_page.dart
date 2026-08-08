@@ -127,9 +127,9 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                       onTap: () => Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const ServerPage()),
                       ),
+                      dense: true,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
-                        vertical: 4,
                       ),
                       title: Text(
                         'SERVER',
