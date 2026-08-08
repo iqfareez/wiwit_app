@@ -20,6 +20,14 @@ class _ServerSetPageState extends ConsumerState<ServerSetPage> {
   bool _isLoading = false;
 
   @override
+  void initState() {
+    super.initState();
+
+    final lastUrl = ref.read(lastServerUrlProvider);
+    if (lastUrl != null) _urlController.text = lastUrl;
+  }
+
+  @override
   void dispose() {
     _urlController.dispose();
     super.dispose();
@@ -33,19 +41,23 @@ class _ServerSetPageState extends ConsumerState<ServerSetPage> {
     setState(() => _isLoading = true);
 
     try {
-      final serverUrl = await resolveServerUrl(_urlController.text);
+      final result = await resolveServerUrl(_urlController.text);
       if (!mounted) return;
 
-      if (serverUrl == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Couldn't reach that server. Check the URL."),
-          ),
-        );
+      if (!result.isSuccess) {
+        final message = switch (result.error!) {
+          ServerProbeError.notWiwitInstance =>
+            "That server doesn't look like a Wiwit instance.",
+          ServerProbeError.unreachable =>
+            "Couldn't reach that server. Check the URL.",
+        };
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(message)));
         return;
       }
 
-      await ref.read(serverUrlProvider.notifier).set(serverUrl);
+      await ref.read(serverUrlProvider.notifier).set(result.url!);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(

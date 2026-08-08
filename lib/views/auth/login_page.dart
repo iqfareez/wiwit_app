@@ -4,6 +4,7 @@ import 'package:gap/gap.dart';
 import 'package:device_info_plus/device_info_plus.dart';
 
 import '../../shared/models/wiwit_api/auth/login_request.dart';
+import '../../shared/models/wiwit_api/instance/instance_response.dart';
 import '../../shared/models/wiwit_api/problem_details.dart';
 import '../../shared/providers/auth_provider.dart';
 import '../../shared/providers/chopper_provider.dart';
@@ -22,12 +23,32 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   bool _obscure = true;
   bool _isLoading = false;
+  InstanceResponse? _instance;
+
+  @override
+  void initState() {
+    super.initState();
+    // Deferred to avoid calling setState. It crashing somewhere
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadServerVersion());
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadServerVersion() async {
+    try {
+      final response = await ref.read(instanceServiceProvider).getInstance();
+      final instance = response.body;
+
+      if (!mounted || instance == null) return;
+      setState(() => _instance = instance);
+    } catch (e) {
+      debugPrint('Failed to load server version: $e');
+    }
   }
 
   Future<void> _changeServer() => ref.read(serverUrlProvider.notifier).clear();
@@ -307,7 +328,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                                     size: 16,
                                   ),
                                   label: Text(
-                                    serverUrl ?? 'Change server',
+                                    _instance == null
+                                        ? (serverUrl ?? 'Change server')
+                                        : '${_instance!.instanceName}'
+                                              '${_instance!.version.display != null ? ' · ${_instance!.version.display}' : ''}',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                   ),
