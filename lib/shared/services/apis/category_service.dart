@@ -4,6 +4,7 @@ import '../../models/wiwit_api/categories/add_category_request.dart';
 import '../../models/wiwit_api/categories/category_list_response.dart';
 import '../../models/wiwit_api/categories/category_response.dart';
 import '../../models/wiwit_api/categories/update_category_request.dart';
+import '../../models/wiwit_api/enums.dart';
 
 part 'category_service.chopper.g.dart';
 
@@ -17,6 +18,7 @@ abstract class CategoryService extends ChopperService {
     @Query() int? page,
     @Query('per_page') int? perPage,
     @Query('show_inactive') bool? showInactive,
+    @Query('sort') CategorySort? sort,
   });
 
   @POST()

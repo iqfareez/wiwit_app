@@ -23,12 +23,14 @@ final class _$CategoryService extends CategoryService {
     int? page,
     int? perPage,
     bool? showInactive,
+    CategorySort? sort,
   }) {
     final Uri $url = Uri.parse('/api/v1/categories');
     final Map<String, dynamic> $params = <String, dynamic>{
       'page': page,
       'per_page': perPage,
       'show_inactive': showInactive,
+      'sort': sort,
     };
     final Request $request = Request(
       'GET',

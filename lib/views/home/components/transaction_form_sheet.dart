@@ -38,9 +38,6 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
   /// How many top categories to show
   static const _topCategoryCount = 3;
 
-  /// How far back we look to work out which categories are used the most.
-  static const _usageSampleSize = 100;
-
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
@@ -122,47 +119,16 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
 
   /// Loads the categories, most used first, so the chips in front of
   /// "Browse all" are the ones the user actually reaches for.
-  /// TODO: improvement oppurtunity for the api provide the amount
   Future<void> _loadCategories() async {
-    final categoriesFuture = ref
-        .read(categoryServiceProvider)
-        .getCategories(perPage: 100);
-    final transactionsFuture = ref
-        .read(transactionServiceProvider)
-        .getTransactions(perPage: _usageSampleSize);
-
     var categories = <CategoryResponse>[];
     try {
-      final categoryResponse = await categoriesFuture;
+      final categoryResponse = await ref
+          .read(categoryServiceProvider)
+          .getCategories(perPage: 100, sort: CategorySort.mostUsed);
       categories = categoryResponse.body?.data ?? [];
     } on ProblemDetails catch (e) {
-      // TODO: Add toast says fetch categories failed
       log('Error occured: $e');
     }
-
-    final usageCount = <int, int>{};
-
-    try {
-      final transactionResponse = await transactionsFuture;
-      final transactions = transactionResponse.body?.data ?? [];
-      for (final transaction in transactions) {
-        final categoryId = transaction.category?.id;
-        if (categoryId == null) continue;
-
-        usageCount[categoryId] = (usageCount[categoryId] ?? 0) + 1;
-      }
-    } on ProblemDetails catch (e) {
-      // Ignored — falls back to alphabetical ordering.
-      log('Error occured: $e');
-    }
-
-    categories.sort((first, second) {
-      final byUsage = (usageCount[second.id] ?? 0).compareTo(
-        usageCount[first.id] ?? 0,
-      );
-
-      return byUsage != 0 ? byUsage : first.name.compareTo(second.name);
-    });
 
     if (!mounted) return;
 

@@ -29,3 +29,18 @@ enum ProblemDetailType {
   /// The problem detail title from API
   final String value;
 }
+
+/// Represents the ordering of the category list endpoint
+enum CategorySort {
+  @JsonValue("name")
+  name("name"),
+  @JsonValue("most_used")
+  mostUsed("most_used");
+
+  const CategorySort(this.value);
+
+  final String value;
+
+  @override
+  String toString() => value;
+}
