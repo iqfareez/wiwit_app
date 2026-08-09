@@ -191,20 +191,40 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
 
   /// Open the category picker sheet.
   Future<void> _browseCategories() async {
+    var didManage = false;
+
     final picked = await showCategoryPickerSheet(
       context: context,
       categories: _categories,
       selectedId: _categoryId,
+      onCategoriesManaged: () => didManage = true,
     );
 
-    if (picked == null || !mounted) return;
+    if (!mounted) return;
+
+    if (didManage) {
+      // reload again because categories may have been modified in the
+      // category management page
+      await _loadCategories();
+
+      if (!mounted) return;
+    }
 
     setState(() {
-      // A category created inside the sheet is not in the list we loaded.
-      if (!_categories.any((category) => category.id == picked.id)) {
-        _categories = [..._categories, picked];
+      if (picked != null) {
+        // A category created inside the sheet is not in the list we loaded.
+        if (!_categories.any((category) => category.id == picked.id)) {
+          _categories = [..._categories, picked];
+        }
+        _categoryId = picked.id;
+        return;
       }
-      _categoryId = picked.id;
+
+      // Whatever was selected may have just been hidden or deleted.
+      if (didManage &&
+          !_categories.any((category) => category.id == _categoryId)) {
+        _categoryId = null;
+      }
     });
   }
 

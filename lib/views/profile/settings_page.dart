@@ -11,6 +11,7 @@ import '../../shared/providers/auth_provider.dart';
 import '../../shared/providers/server_url_provider.dart';
 import '../../shared/providers/theme_mode_provider.dart';
 import '../../shared/utils/theme_mode_utils.dart';
+import '../categories/categories_page.dart';
 import 'components/settings_section_card.dart';
 import 'components/settings_section_label.dart';
 import 'components/settings_tile.dart';
@@ -154,7 +155,20 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                   ],
                 ),
               ),
-              const Gap(16),
+              const Gap(24),
+              const SettingsSectionLabel('Data'),
+              const Gap(8),
+              SettingsSectionCard(
+                child: SettingsTile(
+                  icon: Icons.label_outline,
+                  title: 'Categories',
+                  subtitle: 'Manage categories',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const CategoriesPage()),
+                  ),
+                ),
+              ),
+              const Gap(24),
               const SettingsSectionLabel('Appearance'),
               const Gap(8),
               SettingsSectionCard(

@@ -6,13 +6,18 @@ import '../../../shared/models/wiwit_api/categories/add_category_request.dart';
 import '../../../shared/models/wiwit_api/categories/category_response.dart';
 import '../../../shared/models/wiwit_api/problem_details.dart';
 import '../../../shared/providers/chopper_provider.dart';
+import '../../categories/categories_page.dart';
 import 'section_label.dart';
 
 /// Opens the picker over the transaction form.
+///
+/// [onCategoriesManaged] fires when the manage page was visited from other
+/// places.
 Future<CategoryResponse?> showCategoryPickerSheet({
   required BuildContext context,
   required List<CategoryResponse> categories,
   int? selectedId,
+  VoidCallback? onCategoriesManaged,
 }) {
   return showModalBottomSheet<CategoryResponse>(
     context: context,
@@ -21,8 +26,11 @@ Future<CategoryResponse?> showCategoryPickerSheet({
     constraints: BoxConstraints(
       maxHeight: MediaQuery.sizeOf(context).height * 0.85,
     ),
-    builder: (_) =>
-        CategoryPickerSheet(categories: categories, selectedId: selectedId),
+    builder: (_) => CategoryPickerSheet(
+      categories: categories,
+      selectedId: selectedId,
+      onCategoriesManaged: onCategoriesManaged,
+    ),
   );
 }
 
@@ -32,11 +40,15 @@ class CategoryPickerSheet extends ConsumerStatefulWidget {
     super.key,
     required this.categories,
     this.selectedId,
+    this.onCategoriesManaged,
   });
 
   final List<CategoryResponse> categories;
 
   final int? selectedId;
+
+  /// Called once the manage page has been opened and closed.
+  final VoidCallback? onCategoriesManaged;
 
   @override
   ConsumerState<CategoryPickerSheet> createState() =>
@@ -46,7 +58,13 @@ class CategoryPickerSheet extends ConsumerStatefulWidget {
 class _CategoryPickerSheetState extends ConsumerState<CategoryPickerSheet> {
   static const _minQueryLength = 2;
 
+  static const _categoriesPerPage = 100;
+
   final _searchController = TextEditingController();
+
+  /// initial categories state
+  late var _categories = widget.categories;
+
   var _query = '';
   var _isCreating = false;
 
@@ -63,7 +81,7 @@ class _CategoryPickerSheetState extends ConsumerState<CategoryPickerSheet> {
 
     final query = _query.toLowerCase();
 
-    return widget.categories
+    return _categories
         .where((category) => category.name.toLowerCase().contains(query))
         .toList();
   }
@@ -71,9 +89,34 @@ class _CategoryPickerSheetState extends ConsumerState<CategoryPickerSheet> {
   /// Only offer to create when the name is not already taken.
   bool get _canCreate =>
       _query.isNotEmpty &&
-      !widget.categories.any(
+      !_categories.any(
         (category) => category.name.toLowerCase() == _query.toLowerCase(),
       );
+
+  Future<void> _manageCategories() async {
+    await Navigator.of(
+      context,
+    ).push(MaterialPageRoute<void>(builder: (_) => const CategoriesPage()));
+
+    if (!mounted) return;
+
+    widget.onCategoriesManaged?.call();
+
+    final List<CategoryResponse> categories;
+    try {
+      final response = await ref
+          .read(categoryServiceProvider)
+          .getCategories(perPage: _categoriesPerPage);
+      categories = response.body?.data ?? [];
+    } on ProblemDetails {
+      // ignore error when failed to fetch latest categories
+      return;
+    }
+
+    if (!mounted) return;
+
+    setState(() => _categories = categories);
+  }
 
   Future<void> _create() async {
     setState(() => _isCreating = true);
@@ -106,7 +149,7 @@ class _CategoryPickerSheetState extends ConsumerState<CategoryPickerSheet> {
     Navigator.pop(context, created);
   }
 
-  /// Bolds the matched run, once there is enough of a query to match on.
+  /// Bolds the matched run
   Widget _categoryName(String name, TextStyle? style) {
     if (!_isSearching) return Text(name, style: style);
 
@@ -195,12 +238,22 @@ class _CategoryPickerSheetState extends ConsumerState<CategoryPickerSheet> {
           crossAxisAlignment: .stretch,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
-              child: Text(
-                'Choose category',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: .w700),
+              padding: const EdgeInsets.fromLTRB(24, 0, 12, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Choose category',
+                      style: Theme.of(
+                        context,
+                      ).textTheme.titleMedium?.copyWith(fontWeight: .w700),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _isCreating ? null : _manageCategories,
+                    child: const Text('Manage'),
+                  ),
+                ],
               ),
             ),
             Padding(
@@ -259,7 +312,7 @@ class _CategoryPickerSheetState extends ConsumerState<CategoryPickerSheet> {
                   // The full list stays put underneath, so filtering never
                   // takes browsing away.
                   const _PickerSectionLabel(label: 'All categories'),
-                  if (widget.categories.isEmpty)
+                  if (_categories.isEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: Text(
@@ -268,7 +321,7 @@ class _CategoryPickerSheetState extends ConsumerState<CategoryPickerSheet> {
                       ),
                     )
                   else
-                    for (final category in widget.categories)
+                    for (final category in _categories)
                       _buildCategoryTile(category),
                 ],
               ),

@@ -27,6 +27,14 @@ class CategoryResponse {
 
   Map<String, dynamic> toJson() => _$CategoryResponseToJson(this);
 
+  CategoryResponse copyWith({String? name, bool? isActive}) => CategoryResponse(
+    id: id,
+    name: name ?? this.name,
+    isActive: isActive ?? this.isActive,
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+  );
+
   @override
   String toString() {
     return 'CategoryResponse(id: $id, name: $name, isActive: $isActive)';

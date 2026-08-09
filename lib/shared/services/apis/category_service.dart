@@ -3,6 +3,7 @@ import 'package:chopper/chopper.dart';
 import '../../models/wiwit_api/categories/add_category_request.dart';
 import '../../models/wiwit_api/categories/category_list_response.dart';
 import '../../models/wiwit_api/categories/category_response.dart';
+import '../../models/wiwit_api/categories/update_category_request.dart';
 
 part 'category_service.chopper.g.dart';
 
@@ -29,7 +30,7 @@ abstract class CategoryService extends ChopperService {
   @PATCH(path: '/{id}')
   Future<Response> updateCategory(
     @Path() int id,
-    @Body() Map<String, dynamic> body,
+    @Body() UpdateCategoryRequest body,
   );
 
   @DELETE(path: '/{id}')

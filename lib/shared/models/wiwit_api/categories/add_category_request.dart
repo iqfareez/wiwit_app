@@ -6,7 +6,7 @@ part 'add_category_request.g.dart';
 class AddCategoryRequest {
   final String name;
   @JsonKey(name: 'is_active')
-  final bool isActive;
+  final bool? isActive;
 
   AddCategoryRequest({required this.name, this.isActive = true});
 

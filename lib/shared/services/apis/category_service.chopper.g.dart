@@ -55,7 +55,7 @@ final class _$CategoryService extends CategoryService {
   }
 
   @override
-  Future<Response<dynamic>> updateCategory(int id, Map<String, dynamic> body) {
+  Future<Response<dynamic>> updateCategory(int id, UpdateCategoryRequest body) {
     final Uri $url = Uri.parse('/api/v1/categories/${id}');
     final $body = body;
     final Request $request = Request(
