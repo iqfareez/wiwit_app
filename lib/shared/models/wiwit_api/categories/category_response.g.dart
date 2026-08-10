@@ -11,6 +11,7 @@ CategoryResponse _$CategoryResponseFromJson(Map<String, dynamic> json) =>
       id: (json['id'] as num).toInt(),
       name: json['name'] as String,
       isActive: json['is_active'] as bool,
+      transactionsCount: (json['transactions_count'] as num).toInt(),
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -20,6 +21,7 @@ Map<String, dynamic> _$CategoryResponseToJson(CategoryResponse instance) =>
       'id': instance.id,
       'name': instance.name,
       'is_active': instance.isActive,
+      'transactions_count': instance.transactionsCount,
       'created_at': instance.createdAt.toIso8601String(),
       'updated_at': instance.updatedAt.toIso8601String(),
     };

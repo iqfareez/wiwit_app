@@ -13,6 +13,7 @@ import '../../../shared/models/wiwit_api/transactions/add_transaction_request.da
 import '../../../shared/models/wiwit_api/transactions/transaction_response.dart';
 import '../../../shared/providers/chopper_provider.dart';
 import '../../../shared/utils/format_utils.dart';
+import 'category_picker_sheet.dart';
 import 'section_label.dart';
 
 /// The UI for adding or editing a [transaction] record
@@ -34,24 +35,21 @@ class TransactionFormSheet extends ConsumerStatefulWidget {
 }
 
 class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
-  /// How many category chips stay in front of the "Show all" chip.
-  static const _topCategoryCount = 4;
-
-  /// How far back we look to work out which categories are used the most.
-  static const _usageSampleSize = 100;
+  /// How many top categories to show
+  static const _topCategoryCount = 3;
 
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
   final _notesController = TextEditingController();
-  late final Future<List<CategoryResponse>> _categories;
   late final DateTime _today;
   late final int _initialAmountInCents;
   late final DateTime _initialDate;
   late DateTime _date;
   var _type = TransactionType.expense;
   int? _categoryId;
-  var _showAllCategories = false;
+  var _categories = <CategoryResponse>[];
+  var _isLoadingCategories = true;
   var _showNotes = false;
   var _isSaving = false;
 
@@ -61,7 +59,7 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
   void initState() {
     super.initState();
     _today = DateUtils.dateOnly(DateTime.now());
-    _categories = _loadCategories();
+    _loadCategories();
 
     final transaction = widget.transaction;
     _initialAmountInCents = transaction == null
@@ -120,70 +118,80 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
   }
 
   /// Loads the categories, most used first, so the chips in front of
-  /// "Show all" are the ones the user actually reaches for.
-  /// TODO: improvement oppurtunity for the api provide the amount
-  Future<List<CategoryResponse>> _loadCategories() async {
-    final categoriesFuture = ref
-        .read(categoryServiceProvider)
-        .getCategories(perPage: 100);
-    final transactionsFuture = ref
-        .read(transactionServiceProvider)
-        .getTransactions(perPage: _usageSampleSize);
-
-    final List<CategoryResponse> categories;
+  /// "Browse all" are the ones the user actually reaches for.
+  Future<void> _loadCategories() async {
+    var categories = <CategoryResponse>[];
     try {
-      final categoryResponse = await categoriesFuture;
+      final categoryResponse = await ref
+          .read(categoryServiceProvider)
+          .getCategories(perPage: 100, sort: CategorySort.mostUsed);
       categories = categoryResponse.body?.data ?? [];
-    } on ProblemDetails {
-      // TODO: Add toast says fetch categories failed
-      return [];
-    }
-
-    final usageCount = <int, int>{};
-
-    try {
-      final transactionResponse = await transactionsFuture;
-      final transactions = transactionResponse.body?.data ?? [];
-      for (final transaction in transactions) {
-        final categoryId = transaction.category?.id;
-        if (categoryId == null) continue;
-
-        usageCount[categoryId] = (usageCount[categoryId] ?? 0) + 1;
-      }
     } on ProblemDetails catch (e) {
-      // Ignored — falls back to alphabetical ordering.
       log('Error occured: $e');
     }
 
-    categories.sort((first, second) {
-      final byUsage = (usageCount[second.id] ?? 0).compareTo(
-        usageCount[first.id] ?? 0,
-      );
+    if (!mounted) return;
 
-      return byUsage != 0 ? byUsage : first.name.compareTo(second.name);
+    setState(() {
+      _categories = categories;
+      _isLoadingCategories = false;
     });
-
-    return categories;
   }
 
-  /// The chips to render while collapsed, keeping any selection made from the
-  /// full list in view.
-  List<CategoryResponse> _visibleCategories(List<CategoryResponse> categories) {
-    if (_showAllCategories || categories.length <= _topCategoryCount) {
-      return categories;
-    }
+  /// The chips the form
+  List<CategoryResponse> get _chipCategories {
+    if (_categories.length <= _topCategoryCount) return _categories;
 
-    final visible = categories.take(_topCategoryCount).toList();
-    final selectedIndex = categories.indexWhere(
+    final visible = _categories.take(_topCategoryCount).toList();
+    final selectedIndex = _categories.indexWhere(
       (category) => category.id == _categoryId,
     );
     if (selectedIndex >= _topCategoryCount) {
       visible
         ..removeLast()
-        ..add(categories[selectedIndex]);
+        ..add(_categories[selectedIndex]);
     }
 
     return visible;
+  }
+
+  /// Open the category picker sheet.
+  Future<void> _browseCategories() async {
+    var didManage = false;
+
+    final picked = await showCategoryPickerSheet(
+      context: context,
+      categories: _categories,
+      selectedId: _categoryId,
+      onCategoriesManaged: () => didManage = true,
+    );
+
+    if (!mounted) return;
+
+    if (didManage) {
+      // reload again because categories may have been modified in the
+      // category management page
+      await _loadCategories();
+
+      if (!mounted) return;
+    }
+
+    setState(() {
+      if (picked != null) {
+        // A category created inside the sheet is not in the list we loaded.
+        if (!_categories.any((category) => category.id == picked.id)) {
+          _categories = [..._categories, picked];
+        }
+        _categoryId = picked.id;
+        return;
+      }
+
+      // Whatever was selected may have just been hidden or deleted.
+      if (didManage &&
+          !_categories.any((category) => category.id == _categoryId)) {
+        _categoryId = null;
+      }
+    });
   }
 
   Future<void> _pickDate() async {
@@ -279,57 +287,39 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
   }
 
   Widget _buildCategoryChips() {
-    return FutureBuilder<List<CategoryResponse>>(
-      future: _categories,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return Text(
-            'Loading categories...',
-            style: TextStyle(color: Theme.of(context).colorScheme.outline),
-          );
-        }
+    if (_isLoadingCategories) {
+      return Text(
+        'Loading categories...',
+        style: TextStyle(color: Theme.of(context).colorScheme.outline),
+      );
+    }
 
-        final categories = snapshot.data ?? [];
-        if (categories.isEmpty) {
-          return Text(
-            'No categories yet.',
-            style: TextStyle(color: Theme.of(context).colorScheme.outline),
-          );
-        }
-
-        return AnimatedSize(
-          alignment: Alignment.topCenter,
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOutCubic,
-          child: Wrap(
-            spacing: 8,
-            children: [
-              for (final category in _visibleCategories(categories))
-                ChoiceChip(
-                  label: Text(category.name),
-                  selected: _categoryId == category.id,
-                  onSelected: _isSaving
-                      ? null
-                      : (selected) => setState(
-                          () => _categoryId = selected ? category.id : null,
-                        ),
-                ),
-              if (categories.length > _topCategoryCount)
-                ActionChip(
-                  avatar: Icon(
-                    _showAllCategories ? Icons.expand_less : Icons.expand_more,
+    return Wrap(
+      spacing: 8,
+      children: [
+        for (final category in _chipCategories)
+          ChoiceChip(
+            label: Text(category.name),
+            visualDensity: .comfortable, // slighly smaller than default
+            selected: _categoryId == category.id,
+            onSelected: _isSaving
+                ? null
+                : (selected) => setState(
+                    () => _categoryId = selected ? category.id : null,
                   ),
-                  label: Text(_showAllCategories ? 'Show less' : 'Show all'),
-                  onPressed: _isSaving
-                      ? null
-                      : () => setState(
-                          () => _showAllCategories = !_showAllCategories,
-                        ),
-                ),
-            ],
           ),
-        );
-      },
+        // The browse all chip.
+        ActionChip(
+          avatar: const Icon(Icons.search),
+          visualDensity: .comfortable,
+          label: Text(
+            _categories.isEmpty
+                ? 'Add category'
+                : 'Browse all ${_categories.length}',
+          ),
+          onPressed: _isSaving ? null : _browseCategories,
+        ),
+      ],
     );
   }
 
@@ -341,15 +331,16 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
 
     return Wrap(
       spacing: 8,
-      runSpacing: 8,
       children: [
         ChoiceChip(
           label: const Text('Today'),
+          visualDensity: .comfortable,
           selected: isToday,
           onSelected: _isSaving ? null : (_) => setState(() => _date = _today),
         ),
         ChoiceChip(
           label: const Text('Yesterday'),
+          visualDensity: .comfortable,
           selected: isYesterday,
           onSelected: _isSaving
               ? null
@@ -360,6 +351,7 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
           label: isPickedDate
               ? Text(formatDate(_date))
               : const Icon(Icons.calendar_today_outlined, size: 18),
+          visualDensity: .comfortable,
           selected: isPickedDate,
           showCheckmark: false,
           tooltip: 'Pick another date',

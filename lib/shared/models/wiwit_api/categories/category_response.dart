@@ -9,6 +9,8 @@ class CategoryResponse {
   final String name;
   @JsonKey(name: 'is_active')
   final bool isActive;
+  @JsonKey(name: 'transactions_count')
+  final int transactionsCount;
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
   @JsonKey(name: 'updated_at')
@@ -18,6 +20,7 @@ class CategoryResponse {
     required this.id,
     required this.name,
     required this.isActive,
+    required this.transactionsCount,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -26,6 +29,15 @@ class CategoryResponse {
       _$CategoryResponseFromJson(json);
 
   Map<String, dynamic> toJson() => _$CategoryResponseToJson(this);
+
+  CategoryResponse copyWith({String? name, bool? isActive}) => CategoryResponse(
+    id: id,
+    name: name ?? this.name,
+    isActive: isActive ?? this.isActive,
+    transactionsCount: transactionsCount,
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+  );
 
   @override
   String toString() {

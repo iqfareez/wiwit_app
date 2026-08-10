@@ -58,18 +58,18 @@ abstract class _$ServerUrl extends $AsyncNotifier<String?> {
   }
 }
 
-/// The server URL last cleared by [ServerUrl.clear], kept in memory so the
-/// setup screen can prefill it instead of showing a blank field.
+/// The server URL last cleared by [ServerUrl.clear]. Stored
+/// in memory only.
 
 @ProviderFor(LastServerUrl)
 final lastServerUrlProvider = LastServerUrlProvider._();
 
-/// The server URL last cleared by [ServerUrl.clear], kept in memory so the
-/// setup screen can prefill it instead of showing a blank field.
+/// The server URL last cleared by [ServerUrl.clear]. Stored
+/// in memory only.
 final class LastServerUrlProvider
     extends $NotifierProvider<LastServerUrl, String?> {
-  /// The server URL last cleared by [ServerUrl.clear], kept in memory so the
-  /// setup screen can prefill it instead of showing a blank field.
+  /// The server URL last cleared by [ServerUrl.clear]. Stored
+  /// in memory only.
   LastServerUrlProvider._()
     : super(
         from: null,
@@ -99,8 +99,8 @@ final class LastServerUrlProvider
 
 String _$lastServerUrlHash() => r'cb2269f95fd957bb61448d37fe0c4863cf25717c';
 
-/// The server URL last cleared by [ServerUrl.clear], kept in memory so the
-/// setup screen can prefill it instead of showing a blank field.
+/// The server URL last cleared by [ServerUrl.clear]. Stored
+/// in memory only.
 
 abstract class _$LastServerUrl extends $Notifier<String?> {
   String? build();
