@@ -4,6 +4,7 @@ import 'package:gap/gap.dart';
 
 import '../../shared/models/wiwit_api/categories/category_response.dart';
 import '../../shared/models/wiwit_api/categories/update_category_request.dart';
+import '../../shared/models/wiwit_api/enums.dart';
 import '../../shared/models/wiwit_api/problem_details.dart';
 import '../../shared/providers/chopper_provider.dart';
 import '../profile/components/settings_section_card.dart';
@@ -53,7 +54,11 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
     try {
       final response = await ref
           .read(categoryServiceProvider)
-          .getCategories(perPage: _perPage, showInactive: true);
+          .getCategories(
+            perPage: _perPage,
+            showInactive: true,
+            sort: CategorySort.name,
+          );
 
       return (data: response.body?.data ?? <CategoryResponse>[], error: null);
     } on ProblemDetails catch (error) {
@@ -79,12 +84,7 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage> {
       _status = _ListStatus.ready;
       _categories
         ..clear()
-        ..addAll(result.data!)
-        // sort alphabetical
-        ..sort(
-          (first, second) =>
-              first.name.toLowerCase().compareTo(second.name.toLowerCase()),
-        );
+        ..addAll(result.data!);
     });
   }
 
