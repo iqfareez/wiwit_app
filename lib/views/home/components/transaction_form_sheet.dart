@@ -300,6 +300,7 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
         for (final category in _chipCategories)
           ChoiceChip(
             label: Text(category.name),
+            visualDensity: .comfortable, // slighly smaller than default
             selected: _categoryId == category.id,
             onSelected: _isSaving
                 ? null
@@ -310,6 +311,7 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
         // The browse all chip.
         ActionChip(
           avatar: const Icon(Icons.search),
+          visualDensity: .comfortable,
           label: Text(
             _categories.isEmpty
                 ? 'Add category'
@@ -332,11 +334,13 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
       children: [
         ChoiceChip(
           label: const Text('Today'),
+          visualDensity: .comfortable,
           selected: isToday,
           onSelected: _isSaving ? null : (_) => setState(() => _date = _today),
         ),
         ChoiceChip(
           label: const Text('Yesterday'),
+          visualDensity: .comfortable,
           selected: isYesterday,
           onSelected: _isSaving
               ? null
@@ -347,6 +351,7 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
           label: isPickedDate
               ? Text(formatDate(_date))
               : const Icon(Icons.calendar_today_outlined, size: 18),
+          visualDensity: .comfortable,
           selected: isPickedDate,
           showCheckmark: false,
           tooltip: 'Pick another date',
