@@ -1,0 +1,87 @@
+name: (On Release) Build and upload APK(s) to the release assets
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build_android_apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7.0.1
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: "zulu"
+          java-version: "17"
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+          cache: true
+
+      # File can be encoded to base64 on https://base64.guru/converter/encode/file
+      - name: Decoding android/key.properties
+        run: echo "$KEY_PROP" | base64 --decode > android/key.properties
+        env:
+          KEY_PROP: ${{ secrets.KEY_PROP }}
+
+      - name: Decoding android/key.jks
+        run: echo "$KEY_JKS" | base64 --decode > android/key.jks
+        env:
+          KEY_JKS: ${{ secrets.KEY_JKS }}
+
+        # Each build is staged into artifacts/ right, because another
+        # flutter build apk will clear the apk build directory
+      - name: Build release APK(s) per ABIs
+        run: |
+          flutter pub get
+          flutter build apk --split-per-abi
+          mkdir -p artifacts
+          cp build/app/outputs/apk/release/*-release.apk artifacts/
+
+      - name: Adding split apk summary
+        run: |
+          echo ":white_check_mark: Build split apk" >> $GITHUB_STEP_SUMMARY
+
+      - name: Build release fat APK
+        run: |
+          flutter build apk
+          cp build/app/outputs/apk/release/*-release.apk artifacts/
+
+      - name: Adding fat apk summary
+        run: |
+          echo ":white_check_mark: Build fat apk" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload apks
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: apk-releases
+          path: artifacts/*.apk
+
+      - name: Adding markdown
+        run: |
+          echo ":blue_heart: Using **`flutter --version`**" >> $GITHUB_STEP_SUMMARY
+
+  upload_assets:
+    runs-on: ubuntu-slim
+    needs: build_android_apk
+    permissions:
+      contents: write
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v8.0.1
+        with:
+          name: apk-releases
+
+      - name: Upload file to the assets release
+        uses: softprops/action-gh-release@v3.0.1
+        with:
+          files: "*.apk"
+
+      - name: Adding markdown
+        run: |
+          echo ":rocket: Added release apk(s) to assets" >> $GITHUB_STEP_SUMMARY
