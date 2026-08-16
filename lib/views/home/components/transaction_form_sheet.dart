@@ -42,6 +42,7 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
   final _titleController = TextEditingController();
   final _amountController = TextEditingController();
   final _notesController = TextEditingController();
+  final FocusNode _notesFieldFocusNode = FocusNode();
   late final DateTime _today;
   late final int _initialAmountInCents;
   late final DateTime _initialDate;
@@ -87,6 +88,7 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
     _titleController.dispose();
     _amountController.dispose();
     _notesController.dispose();
+    _notesFieldFocusNode.dispose();
     super.dispose();
   }
 
@@ -366,7 +368,12 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
       return Align(
         alignment: Alignment.centerLeft,
         child: TextButton.icon(
-          onPressed: _isSaving ? null : () => setState(() => _showNotes = true),
+          onPressed: _isSaving
+              ? null
+              : () {
+                  setState(() => _showNotes = true);
+                  _notesFieldFocusNode.requestFocus();
+                },
           icon: const Icon(Icons.notes_outlined),
           label: const Text('Add notes'),
         ),
@@ -375,9 +382,8 @@ class _TransactionFormSheetState extends ConsumerState<TransactionFormSheet> {
 
     return TextFormField(
       controller: _notesController,
+      focusNode: _notesFieldFocusNode,
       enabled: !_isSaving,
-      // Editing opens with notes already filled in, so stealing focus there
-      // would just cover the sheet with the keyboard.
       autofocus: !_isEditing,
       textCapitalization: TextCapitalization.sentences,
       maxLines: 2,
