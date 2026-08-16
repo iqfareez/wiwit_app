@@ -8,3 +8,12 @@ plugins:
 linter:
   rules:
     - prefer_relative_imports
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - windows/**
+    - macos/**
+    - linux/**
