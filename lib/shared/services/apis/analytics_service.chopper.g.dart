@@ -19,7 +19,7 @@ final class _$AnalyticsService extends AnalyticsService {
   final Type definitionType = AnalyticsService;
 
   @override
-  Future<Response<TxnOverviewResponse>> getOverview({String? month}) {
+  Future<TxnOverviewResponse> getOverview({String? month}) async {
     final Uri $url = Uri.parse('/api/v1/analytics/overview');
     final Map<String, dynamic> $params = <String, dynamic>{'month': month};
     final Request $request = Request(
@@ -29,6 +29,8 @@ final class _$AnalyticsService extends AnalyticsService {
       parameters: $params,
       dateFormat: DateFormat.date,
     );
-    return client.send<TxnOverviewResponse, TxnOverviewResponse>($request);
+    final Response $response = await client
+        .send<TxnOverviewResponse, TxnOverviewResponse>($request);
+    return $response.bodyOrThrow;
   }
 }

@@ -12,7 +12,5 @@ abstract class AnalyticsService extends ChopperService {
   /// Get analytics overview
   /// [month] must be in Y-m format. Example: '2026-08'
   @GET(path: '/overview', dateFormat: .date)
-  Future<Response<TxnOverviewResponse>> getOverview({
-    @Query('month') String? month,
-  });
+  Future<TxnOverviewResponse> getOverview({@Query('month') String? month});
 }
