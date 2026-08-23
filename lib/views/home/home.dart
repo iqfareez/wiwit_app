@@ -4,12 +4,16 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
+import 'package:intl/intl.dart' as intl;
 
+import '../../shared/models/wiwit_api/analytics/txn_overview_response.dart';
 import '../../shared/models/wiwit_api/problem_details.dart';
 import '../../shared/models/wiwit_api/profile/profile_response.dart';
 import '../../shared/models/wiwit_api/transactions/transaction_response.dart';
 import '../../shared/providers/chopper_provider.dart';
+import '../../shared/utils/format_utils.dart';
 import 'components/home_header.dart';
+import 'components/overview_categories_chart.dart';
 import 'components/transaction_detail_sheet.dart';
 import 'components/transaction_form_sheet.dart';
 import 'components/transaction_tile.dart';
@@ -40,13 +44,15 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
   var _isRefreshing = false;
   String? _errorMessage;
   ProfileResponse? _userProfile;
+  TxnOverviewResponse? _analyticsOverview;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _loadTransactions();
     _loadProfile();
+    _loadSummary();
+    _loadTransactions();
   }
 
   @override
@@ -80,6 +86,23 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
     } catch (error) {
       return (data: null, error: '$error');
     }
+  }
+
+  /// Fetches the summary analytics info
+  Future<void> _loadSummary() async {
+    final Response<TxnOverviewResponse> response;
+
+    var currentMonth = intl.DateFormat("y-MM").format(DateTime.now());
+
+    response = await ref
+        .read(analyticsServiceProvider)
+        .getOverview(month: currentMonth);
+
+    final summaryResult = response.body;
+
+    if (!mounted || summaryResult == null) return;
+
+    setState(() => _analyticsOverview = summaryResult);
   }
 
   Future<void> _loadTransactions() async {
@@ -307,6 +330,65 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
                 HomeHeader(
                   greeting: _getGreeting(),
                   profileDetail: _userProfile,
+                ),
+                const Gap(12),
+                Card(
+                  margin: EdgeInsets.zero,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 22, 24, 18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Net in ${intl.DateFormat("MMMM").format(DateTime.now())}'
+                              .toUpperCase(),
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                        const Gap(2),
+                        Text(
+                          _analyticsOverview == null
+                              ? '-'
+                              : 'RM ${formatAmount(parseAmountInCents(_analyticsOverview!.summary.net.toString()))}',
+                          style: Theme.of(context).textTheme.displaySmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 0,
+                              ),
+                        ),
+                        const Gap(14),
+                        Text(
+                          'Top categories'.toUpperCase(),
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                        const Gap(8),
+                        OverviewCategoriesChart(
+                          categories: _analyticsOverview?.categories,
+                          centerLabel: _analyticsOverview == null
+                              ? '-'
+                              : formatAmount(
+                                  parseAmountInCents(
+                                    _analyticsOverview!.categories.meta.total
+                                        .toString(),
+                                  ),
+                                ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
                 const Gap(12),
                 Row(
