@@ -2,6 +2,7 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../../../shared/models/wiwit_api/analytics/txn_overview_response.dart';
+import '../../../shared/utils/format_utils.dart';
 
 class OverviewCategoriesChart extends StatefulWidget {
   const OverviewCategoriesChart({
@@ -24,7 +25,7 @@ class _OverviewCategoriesChartState extends State<OverviewCategoriesChart> {
   static const _sectionSpace = 1.8;
   static const _centerSpaceRadius = 40.0;
   static const _defaultSectionRadius = 15.0;
-  static const _touchedSectionRadius = 16.0;
+  static const _touchedSectionRadius = 18.0;
   static const _legendDotSize = 8.0;
   static const _legendVerticalPadding = 1.0;
 
@@ -86,15 +87,19 @@ class _OverviewCategoriesChartState extends State<OverviewCategoriesChart> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        widget.centerLabel,
+                        _centerValue(categories),
+                        textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.w800),
                       ),
                       Text(
-                        'spent',
+                        _centerCaption(categories),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
+                        maxLines: 1,
+                        textAlign: .center,
+                        overflow: .ellipsis,
                       ),
                     ],
                   ),
@@ -111,6 +116,22 @@ class _OverviewCategoriesChartState extends State<OverviewCategoriesChart> {
 
   List<TxnCategoryPoint> _getTopCategories() =>
       [...?widget.categories?.data].take(_maxCategories).toList();
+
+  String _centerValue(List<TxnCategoryPoint> categories) {
+    if (touchedIndex < 0 || touchedIndex >= categories.length) {
+      return widget.centerLabel;
+    }
+
+    return _formatShare(categories[touchedIndex].share);
+  }
+
+  String _centerCaption(List<TxnCategoryPoint> categories) {
+    if (touchedIndex < 0 || touchedIndex >= categories.length) {
+      return 'spent';
+    }
+
+    return categories[touchedIndex].categoryName;
+  }
 
   List<PieChartSectionData> _buildSections(List<TxnCategoryPoint> categories) {
     return [
@@ -158,7 +179,7 @@ class _OverviewCategoriesChartState extends State<OverviewCategoriesChart> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  _formatShare(categories[index].share),
+                  'RM ${formatAmount(parseAmountInCents(categories[index].total.toString()))}',
                   style: textTheme.bodySmall,
                 ),
               ],
