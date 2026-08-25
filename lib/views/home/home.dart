@@ -9,6 +9,7 @@ import '../../shared/models/wiwit_api/problem_details.dart';
 import '../../shared/models/wiwit_api/profile/profile_response.dart';
 import '../../shared/models/wiwit_api/transactions/transaction_response.dart';
 import '../../shared/providers/chopper_provider.dart';
+import 'components/finance_overview_widget.dart';
 import 'components/home_header.dart';
 import 'components/transaction_detail_sheet.dart';
 import 'components/transaction_form_sheet.dart';
@@ -45,8 +46,8 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _loadTransactions();
     _loadProfile();
+    _loadTransactions();
   }
 
   @override
@@ -308,6 +309,8 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
                   greeting: _getGreeting(),
                   profileDetail: _userProfile,
                 ),
+                const Gap(12),
+                FinanceOverviewWidget(),
                 const Gap(12),
                 Row(
                   children: [

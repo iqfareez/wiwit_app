@@ -52,7 +52,7 @@ final class ChopperClientProvider
   }
 }
 
-String _$chopperClientHash() => r'5462cd89658efc4129e2a7b2a09b3efb840a5362';
+String _$chopperClientHash() => r'c94b4218175121383a1705a5886a4ff282daf440';
 
 @ProviderFor(authService)
 final authServiceProvider = AuthServiceProvider._();
@@ -94,6 +94,52 @@ final class AuthServiceProvider
 }
 
 String _$authServiceHash() => r'b6c48e48d9487d892c0d1fec1e4c92f1a7d212cb';
+
+@ProviderFor(analyticsService)
+final analyticsServiceProvider = AnalyticsServiceProvider._();
+
+final class AnalyticsServiceProvider
+    extends
+        $FunctionalProvider<
+          AnalyticsService,
+          AnalyticsService,
+          AnalyticsService
+        >
+    with $Provider<AnalyticsService> {
+  AnalyticsServiceProvider._()
+    : super(
+        from: null,
+        argument: null,
+        retry: _neverRetry,
+        name: r'analyticsServiceProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
+
+  @override
+  String debugGetCreateSourceHash() => _$analyticsServiceHash();
+
+  @$internal
+  @override
+  $ProviderElement<AnalyticsService> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  AnalyticsService create(Ref ref) {
+    return analyticsService(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(AnalyticsService value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<AnalyticsService>(value),
+    );
+  }
+}
+
+String _$analyticsServiceHash() => r'096e2c6cc13412bfdb7878d79da8afae9962b8a2';
 
 @ProviderFor(categoryService)
 final categoryServiceProvider = CategoryServiceProvider._();

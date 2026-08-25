@@ -1,6 +1,7 @@
 import 'package:chopper/chopper.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
+import '../models/wiwit_api/analytics/txn_overview_response.dart';
 import '../models/wiwit_api/auth/login_response.dart';
 import '../models/wiwit_api/categories/category_list_response.dart';
 import '../models/wiwit_api/categories/category_response.dart';
@@ -8,6 +9,7 @@ import '../models/wiwit_api/instance/instance_response.dart';
 import '../models/wiwit_api/profile/profile_response.dart';
 import '../models/wiwit_api/transactions/transaction_list_response.dart';
 import '../models/wiwit_api/transactions/transaction_response.dart';
+import '../services/apis/analytics_service.dart';
 import '../services/apis/auth_service.dart';
 import '../services/apis/category_service.dart';
 import '../services/apis/instance_service.dart';
@@ -34,6 +36,7 @@ ChopperClient chopperClient(Ref ref) {
   }
 
   final converter = JsonSerializableConverter({
+    TxnOverviewResponse: TxnOverviewResponse.fromJson,
     LoginResponse: LoginResponse.fromJson,
     CategoryListResponse: CategoryListResponse.fromJson,
     CategoryResponse: CategoryResponse.fromJson,
@@ -47,6 +50,7 @@ ChopperClient chopperClient(Ref ref) {
     baseUrl: Uri.parse(serverUrl),
     services: [
       AuthService.create(),
+      AnalyticsService.create(),
       CategoryService.create(),
       TransactionService.create(),
       ProfileService.create(),
@@ -68,6 +72,10 @@ ChopperClient chopperClient(Ref ref) {
 @Riverpod(keepAlive: true, retry: _neverRetry)
 AuthService authService(Ref ref) =>
     ref.watch(chopperClientProvider).getService<AuthService>();
+
+@Riverpod(keepAlive: true, retry: _neverRetry)
+AnalyticsService analyticsService(Ref ref) =>
+    ref.watch(chopperClientProvider).getService<AnalyticsService>();
 
 @Riverpod(keepAlive: true, retry: _neverRetry)
 CategoryService categoryService(Ref ref) =>
