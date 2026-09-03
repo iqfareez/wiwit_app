@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
@@ -63,13 +65,10 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       final email = _emailController.text.trim();
       final password = _passwordController.text;
 
-      DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
-      AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
-
       final request = LoginRequest(
         email: email,
         password: password,
-        deviceName: androidInfo.manufacturer + androidInfo.model,
+        deviceName: await _getDeviceName(),
       );
 
       final response = await ref.read(authServiceProvider).login(request);
@@ -97,6 +96,20 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  /// Get device name per platform
+  Future<String> _getDeviceName() async {
+    final deviceInfo = DeviceInfoPlugin();
+    if (Platform.isAndroid) {
+      AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+      return androidInfo.manufacturer + androidInfo.model;
+    }
+    if (Platform.isIOS) {
+      IosDeviceInfo iosInfo = await deviceInfo.iosInfo;
+      return iosInfo.name;
+    }
+    return 'Unknown Device';
   }
 
   @override
