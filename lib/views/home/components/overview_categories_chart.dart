@@ -1,5 +1,5 @@
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../shared/models/wiwit_api/analytics/txn_overview_response.dart';
 import '../../../shared/utils/format_utils.dart';

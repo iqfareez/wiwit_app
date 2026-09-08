@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../shared/components/profile_avatar_widget.dart';
 import '../../../shared/constants.dart';

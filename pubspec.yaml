@@ -11,6 +11,7 @@ dependencies:
     sdk: flutter
 
   chopper: ^8.7.0
+  cupertino_ui: any
   device_info_plus: ^13.2.0
   fl_chart: ^1.2.0
   flutter_riverpod: ^3.3.2
@@ -18,6 +19,7 @@ dependencies:
   gap: ^3.0.1
   intl: ^0.20.3
   json_annotation: ^4.12.0
+  material_ui: ^1.1.1
   package_info_plus: ^10.2.1
   riverpod_annotation: ^4.0.3
   shared_preferences: ^2.5.5

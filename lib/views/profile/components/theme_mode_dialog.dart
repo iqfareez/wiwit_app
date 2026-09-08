@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../shared/providers/theme_mode_provider.dart';
 import '../../../shared/utils/theme_mode_utils.dart';

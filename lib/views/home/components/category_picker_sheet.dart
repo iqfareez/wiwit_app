@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gap/gap.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../shared/models/wiwit_api/categories/add_category_request.dart';
 import '../../../shared/models/wiwit_api/categories/category_response.dart';

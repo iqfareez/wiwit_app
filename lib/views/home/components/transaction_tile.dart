@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../shared/models/wiwit_api/enums.dart';
 import '../../../shared/models/wiwit_api/transactions/transaction_response.dart';
