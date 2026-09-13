@@ -29,7 +29,7 @@ final class _$AnalyticsService extends AnalyticsService {
       parameters: $params,
       dateFormat: DateFormat.date,
     );
-    final Response $response = await client
+    final Response<TxnOverviewResponse> $response = await client
         .send<TxnOverviewResponse, TxnOverviewResponse>($request);
     return $response.bodyOrThrow;
   }

@@ -9,6 +9,8 @@ import '../../shared/models/wiwit_api/problem_details.dart';
 import '../../shared/models/wiwit_api/profile/profile_response.dart';
 import '../../shared/models/wiwit_api/transactions/transaction_response.dart';
 import '../../shared/providers/chopper_provider.dart';
+import '../../shared/providers/overview_provider.dart';
+import '../../shared/utils/format_utils.dart';
 import 'components/finance_overview_widget.dart';
 import 'components/home_header.dart';
 import 'components/transaction_detail_sheet.dart';
@@ -123,6 +125,10 @@ class _HomeState extends ConsumerState<Home> with WidgetsBindingObserver {
     if (_isRefreshing) return;
 
     setState(() => _isRefreshing = true);
+
+    // trigger summary card refreshes
+    ref.invalidate(txnOverviewProvider(month: formatMonthKey(DateTime.now())));
+
     final result = await _fetchTransactions();
 
     if (!mounted) return;

@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 final _amountFormat = NumberFormat('#,##0.00', 'en_US');
 final _dateFormat = DateFormat('dd/MM/yyyy', 'en_US');
 final _longDateFormat = DateFormat('EEE, d MMM yyyy', 'en_US');
+final _monthKeyFormat = DateFormat('y-MM', 'en_US');
 
 /// Formats whole cents the way the amount field shows them, e.g. `1,234.50`.
 String formatAmount(int cents) => _amountFormat.format(cents / 100);
@@ -17,6 +18,10 @@ int parseAmountInCents(String amount) {
 
 /// Format date to dd/MM/yyyy
 String formatDate(DateTime date) => _dateFormat.format(date);
+
+/// Formats a date as the `y-MM` month key the analytics API expects, e.g.
+/// `2026-09`.
+String formatMonthKey(DateTime date) => _monthKeyFormat.format(date);
 
 /// The full date the way the detail sheet spells it out, e.g. `Wed, 29 Jul
 /// 2026`.
